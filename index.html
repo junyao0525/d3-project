@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Olist Insights Dashboard</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        color: #333;
+      }
+
+      header {
+        background: rgba(30, 41, 59, 0.95);
+        backdrop-filter: blur(10px);
+        color: #fff;
+        padding: 20px 40px;
+        text-align: center;
+        font-size: 2.5rem;
+        font-weight: 700;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+
+      .tabs {
+        display: flex;
+        justify-content: center;
+        background: rgba(51, 65, 85, 0.9);
+        backdrop-filter: blur(10px);
+        padding: 15px;
+        gap: 15px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        position: sticky;
+        top: 84px;
+        z-index: 100;
+      }
+
+      .tab-btn {
+        background: linear-gradient(135deg, #64748b, #475569);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        padding: 12px 25px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      }
+
+      .tab-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      }
+
+      .tab-btn.active {
+        background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+        color: white;
+        transform: translateY(-2px);
+      }
+
+      .dashboard {
+        display: none;
+        padding: 30px 40px;
+      }
+
+      .dashboard.active {
+        display: block;
+      }
+
+      .dashboard-content {
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      .filter-container {
+        margin-bottom: 30px;
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+        align-items: center;
+        background: rgba(255, 255, 255, 0.2);
+        padding: 20px;
+        border-radius: 15px;
+        backdrop-filter: blur(10px);
+      }
+
+      .filter-container label {
+        color: white;
+        font-weight: 600;
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .filter-container select {
+        padding: 10px 15px;
+        border-radius: 8px;
+        border: none;
+        background: white;
+        font-weight: 500;
+        min-width: 200px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      .map-container {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        padding: 30px;
+        margin-bottom: 40px;
+        position: relative;
+        overflow: hidden;
+        justify-content: center;
+        
+      }
+      .map-box{
+        display: flex;
+        justify-content: space-between; /* horizontal centering */
+        align-items: center; /* vertical centering */
+        
+      }
+      .map-container::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #38bdf8, #0ea5e9, #0284c7);
+      }
+
+      .chart-container {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        padding: 30px;
+        margin-bottom: 40px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .chart-container::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #f59e0b, #d97706, #b45309);
+      }
+
+      canvas {
+        border-radius: 12px;
+        width: 100% !important;
+      }
+
+      .map-title {
+        text-align: center;
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 20px;
+        justify-content: center;
+      }
+
+      .legend {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 20px;
+        gap: 15px;
+      }
+
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 0.9rem;
+        color: #64748b;
+      }
+
+      .legend-color {
+        width: 20px;
+        height: 15px;
+        border-radius: 3px;
+      }
+
+      .state-info {
+        position: absolute;
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 10px 15px;
+        border-radius: 8px;
+        pointer-events: none;
+        font-size: 0.9rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        z-index: 1000;
+        opacity: 0;
+        transition: opacity 0.2s;
+      }
+
+      .selected-state-info {
+        background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+        color: white;
+        padding: 20px;
+        border-radius: 15px;
+        margin-top: 20px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+      }
+
+      .loading {
+        text-align: center;
+        color: white;
+        font-size: 1.2rem;
+        padding: 50px;
+      }
+
+      #brazil-map {
+        height: 600px;
+        width: 50%;
+      }
+
+      .map-svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      .states {
+        fill: none;
+        stroke: #fff;
+        stroke-linejoin: round;
+        stroke-width: 1;
+        transition: all 0.3s ease;
+      }
+
+      .state-borders {
+        fill: none;
+        stroke: #fff;
+        stroke-width: 1.5;
+      }
+
+      .reset-btn {
+        padding: 10px 20px;
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      }
+
+      .reset-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      }
+
+      .state-label {
+        pointer-events: none;
+        font-size: 12px;
+        font-weight: bold;
+        text-anchor: middle;
+        transition: all 0.3s ease;
+      }
+
+      .state-highlight {
+        font-size: 14px;
+        font-weight: 900;
+      }
+
+      .legend-gradient {
+        height: 20px;
+        width: 300px;
+        background: linear-gradient(to right, #f0f9ff, #0c4a6e);
+        border-radius: 4px;
+        margin: 0 auto;
+        position: relative;
+      }
+
+      .legend-min {
+        position: absolute;
+        left: 0;
+        top: 25px;
+        font-size: 0.8rem;
+        color: #64748b;
+      }
+
+      .legend-max {
+        position: absolute;
+        right: 0;
+        top: 25px;
+        font-size: 0.8rem;
+        color: #64748b;
+      }
+
+      .legend-title {
+        text-align: center;
+        font-size: 0.9rem;
+        margin-top: 5px;
+        color: #64748b;
+        font-weight: 600;
+      }
+
+      .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+        gap: 30px;
+        margin-bottom: 30px;
+      }
+
+      .info-card {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        padding: 30px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        position: relative;
+      }
+
+      .info-card h3 {
+        color: #1e293b;
+        margin-bottom: 15px;
+        font-size: 1.4rem;
+      }
+
+      .info-card .value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #0ea5e9;
+        margin-bottom: 10px;
+      }
+
+      .info-card .label {
+        font-size: 1rem;
+        color: #64748b;
+      }
+
+      .info-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #10b981, #059669, #047857);
+        border-radius: 4px 4px 0 0;
+      }
+
+      .section-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: white;
+        margin: 30px 0 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .active-filter {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 1rem;
+        font-weight: 600;
+      }
+
+      .chart-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 15px;
+        text-align: center;
+      }
+
+      .selection-info {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: white;
+        padding: 12px 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      }
+
+      .selection-info .clear-btn {
+        margin-left: auto;
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        color: white;
+        padding: 5px 15px;
+        border-radius: 20px;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+
+      .selection-info .clear-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+      }
+
+      @media (max-width: 768px) {
+        .dashboard-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .tabs {
+          flex-wrap: wrap;
+        }
+
+        header {
+          font-size: 1.8rem;
+          padding: 15px 20px;
+        }
+
+        .map-container,
+        .chart-container {
+          padding: 20px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>🛒 Olist E-Commerce Analytics Dashboard</header>
+    <div class="loading" id="loading">Loading data...</div>
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab(0)">
+        🗺️ Geographic Insights
+      </button>
+      <button class="tab-btn" onclick="switchTab(1)">
+        💳 Payment Analysis
+      </button>
+      <button class="tab-btn" onclick="switchTab(2)">
+        📦 Product Performance
+      </button>
+    </div>
+
+    <div class="selection-info" id="selection-info" style="display: none">
+      <span>🔍 Showing data for: </span>
+      <span id="selected-item">State</span>
+      <button class="clear-btn" onclick="clearSelection()">
+        Clear Selection
+      </button>
+    </div>
+
+    <div class="dashboard active">
+      <div class="dashboard-content">
+        <div class="filter-container">
+          <label for="geo-filter">🎯 Filter by State:</label>
+          <select id="geo-filter">
+            <option value="">All States</option>
+          </select>
+          <button id="reset-selection" class="reset-btn">
+            Reset Selection
+          </button>
+          <div class="active-filter" id="active-filter-display">
+            Showing all states
+          </div>
+        </div>
+
+        <div class="section-title">
+          <span>📊 Key Metrics</span>
+        </div>
+
+        <div class="dashboard-grid">
+          <div class="info-card">
+            <h3>Total Revenue</h3>
+            <div class="value" id="total-revenue">error</div>
+            <div class="label">Across all states</div>
+          </div>
+
+          <div class="info-card">
+            <h3>Avg. Delivery Time</h3>
+            <div class="value" id="avg-delivery">error</div>
+            <div class="label">Nationwide average</div>
+          </div>
+
+          <div class="info-card">
+            <h3>Customer Satisfaction</h3>
+            <div class="value" id="avg-review">error</div>
+            <div class="label">Average review score</div>
+          </div>
+        </div>
+
+        <div class="section-title">
+          <span>🗺️ Geographic Analysis</span>
+        </div>
+
+        <div class="map-container">
+          <div class="map-box">
+            <div class="map-title">💰 Total Revenue by Brazilian State</div>
+            <div id="brazil-map">
+              <svg class="map-svg" style="background-color: #f9f9f9"></svg>
+            </div>
+          </div>
+                      <div id="selected-state-info"></div>
+
+          </div>
+
+        </div>
+
+        <div class="section-title">
+          <span>📈 Performance Metrics</span>
+        </div>
+
+        <div class="dashboard-grid">
+          <div class="chart-container">
+            <div class="chart-title">Revenue by State</div>
+            <canvas id="revenueByState" height="400"></canvas>
+          </div>
+
+          <div class="chart-container">
+            <div class="chart-title">Delivery Time by State</div>
+            <canvas id="deliveryTimeByState" height="400"></canvas>
+          </div>
+
+          <div class="chart-container">
+            <div class="chart-title">Review Scores by State</div>
+            <canvas id="reviewScoreByState" height="400"></canvas>
+          </div>
+
+          <div class="chart-container">
+            <div class="chart-title">Freight Cost vs Revenue</div>
+            <canvas id="freightVsRevenue" height="400"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dashboard">
+      <div class="dashboard-content">
+        <div class="filter-container">
+          <label for="payment-filter">💳 Filter by Payment Type:</label>
+          <select id="payment-filter"></select>
+          <div class="active-filter" id="payment-filter-display">
+            All payment types
+          </div>
+        </div>
+
+        <div class="chart-container">
+          <canvas id="avgPaymentValue" height="400"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="dashboard">
+      <div class="dashboard-content">
+        <div class="filter-container">
+          <label for="category-filter">📦 Filter by Product Category:</label>
+          <select id="category-filter"></select>
+          <div class="active-filter" id="category-filter-display">
+            All categories
+          </div>
+        </div>
+
+        <div class="chart-container">
+          <canvas id="revenueByCategory" height="400"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="state-info"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://d3js.org/topojson.v3.min.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
