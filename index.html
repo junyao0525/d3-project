@@ -118,7 +118,15 @@
         min-width: 200px;
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
       }
-
+      .chart-title {
+        font-size: 1.2rem;
+        font-weight: 700;
+        text-align: center;
+        color: #1e293b;
+        margin-bottom: 20px;
+        border-bottom: 2px solid #e2e8f0;
+        padding-bottom: 8px;
+      }
       .map-container {
         background: white;
         border-radius: 20px;
@@ -442,6 +450,20 @@
       }
     </style>
   </head>
+  <script>
+  function switchTab(index) {
+    const dashboards = document.querySelectorAll('.dashboard');
+    const tabButtons = document.querySelectorAll('.tab-btn');
+
+    dashboards.forEach((dash, i) => {
+      dash.classList.toggle('active', i === index);
+    });
+
+    tabButtons.forEach((btn, i) => {
+      btn.classList.toggle('active', i === index);
+    });
+  }
+</script>
   <body>
     <header>🛒 Olist E-Commerce Analytics Dashboard</header>
     <div class="loading" id="loading">Loading data...</div>
@@ -551,32 +573,132 @@
 
     <div class="dashboard">
       <div class="dashboard-content">
+        
+        <!-- Section Header -->
+        <div class="section-title">💳 Payment Analysis</div>
+
+        <!-- Filter Bar -->
         <div class="filter-container">
-          <label for="payment-filter">💳 Filter by Payment Type:</label>
-          <select id="payment-filter"></select>
+          <label for="payment-filter">Filter by Payment Type:</label>
+          <select id="payment-filter">
+            <option value="">All</option>
+          </select>
+          <button id="reset-payment-filter" class="reset-btn">
+            Reset Selection
+          </button>
           <div class="active-filter" id="payment-filter-display">
             All payment types
           </div>
+           
         </div>
 
-        <div class="chart-container">
-          <canvas id="avgPaymentValue" height="400"></canvas>
-        </div>
-      </div>
-    </div>
+        <!-- Key Insights Section -->
+        <div class="section-title">💡 Key Insights</div>
+        <div class="dashboard-grid">
+          <div class="info-card" id="insight-highest-payment">
+            <h3>💰 Highest Avg Payment</h3>
+            <div class="value" id="top-payment-type">Loading...</div>
+            <div class="label">Payment method with the highest average value</div>
+          </div>
 
-    <div class="dashboard">
-      <div class="dashboard-content">
-        <div class="filter-container">
-          <label for="category-filter">📦 Filter by Product Category:</label>
-          <select id="category-filter"></select>
-          <div class="active-filter" id="category-filter-display">
-            All categories
+          <div class="info-card" id="insight-best-review">
+            <h3>🌟 Best Customer Feedback</h3>
+            <div class="value" id="top-review-type">Loading...</div>
+            <div class="label">Payment method with highest review score</div>
+          </div>
+
+          <div class="info-card" id="insight-most-popular">
+            <h3>📊 Most Used Payment</h3>
+            <div class="value" id="most-used-type">Loading...</div>
+            <div class="label">Most frequently used payment type</div>
           </div>
         </div>
 
-        <div class="chart-container">
-          <canvas id="revenueByCategory" height="400"></canvas>
+        <!-- Data Visualizations -->
+        <div class="section-title">📊 Visual Breakdown</div>
+        <div class="dashboard-grid">
+          
+          <div class="chart-container">
+            <div class="chart-title">💰 Avg. Payment Value by Type</div>
+            <canvas id="avgPaymentValue" height="400"></canvas>
+          </div>
+
+          <div class="chart-container">
+            <div class="chart-title">⭐ Avg. Review Score by Payment Type</div>
+            <canvas id="avgReviewScore" height="400"></canvas>
+          </div>
+
+          <div class="chart-container">
+            <div class="chart-title">📈 Order Value Distribution</div>
+            <canvas id="orderValueDistribution" height="400"></canvas>
+          </div>
+
+          <div class="chart-container">
+            <div class="chart-title">📦 Payment Type by Product Category</div>
+            <canvas id="paymentByCategory" height="400"></canvas>
+          </div>
+
+        </div>
+
+        <!-- Optional Insight Text -->
+        <div class="selection-info" style="margin-top: 30px;">
+          💡 <strong>Insight:</strong> Credit cards dominate high-value orders, while boleto shows lower customer satisfaction. Consider refining checkout UX or fraud filters accordingly.
+        </div>
+
+      </div>
+    </div>
+
+   <div class="dashboard">
+      <div class="dashboard-content">
+       <div class="filter-container">
+          <label for="category-filter">📦 Filter by Product Category:</label>
+          <select id="category-filter">
+            <option value="">All</option>
+          </select>  
+          <button id="reset-category-filter" class="reset-btn">
+            Reset Selection
+          </button>
+          <div class="active-filter" id="category-filter-display">
+            All categories
+          </div>
+         
+        </div>
+
+        <div class="section-title">💡 Key Insights</div>
+        <div class="dashboard-grid">
+          <div class="info-card">
+            <h3>📉 Lowest Revenue Category</h3>
+            <div class="value" id="lowest-revenue-cat">Loading...</div>
+            <div class="label">Category with least sales</div>
+          </div>
+
+          <div class="info-card">
+            <h3>😞 Lowest Review Score</h3>
+            <div class="value" id="lowest-review-cat">Loading...</div>
+            <div class="label">Category with worst feedback</div>
+          </div>
+        </div>
+
+        <div class="dashboard-grid">
+          <div class="chart-container">
+            <div class="chart-title">Total Revenue by Product Category</div>
+            <canvas id="revenueByCategory"></canvas>
+          </div>
+
+          <div class="chart-container">
+            <div class="chart-title">Avg. Review Score by Product Category</div>
+            <canvas id="reviewByCategory"></canvas>
+          </div>
+
+          <div class="chart-container">
+            <div class="chart-title">Revenue vs Review Score (Scatter)</div>
+            <canvas id="scatterRevenueReview"></canvas>
+          </div>
+
+          <div class="chart-container">
+            <div class="chart-title">Cancellation Rate by Category</div>
+            <canvas id="cancelByCategory"></canvas>
+          </div>
         </div>
       </div>
     </div>
@@ -586,6 +708,9 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://d3js.org/topojson.v3.min.js"></script>
-    <script src="app.js"></script>
+    <script src="app_q1.js"></script>
+    <script src="app_q2.js"></script>
+    <script src="app_q3.js"></script>
+
   </body>
 </html>
