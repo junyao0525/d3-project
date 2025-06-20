@@ -53,12 +53,13 @@ function drawPaymentCharts(data) {
     }
   );
 
-  // Aggregation
+  // === Aggregation ===
   const paymentAgg = d3.rollups(
     data,
     (v) => ({
       avgPayment: d3.mean(v, (d) => +d.payment_value),
       avgReview: d3.mean(v, (d) => +d.review_score),
+      count: v.length,
     }),
     (d) => d.payment_type
   );
@@ -94,6 +95,17 @@ function drawPaymentCharts(data) {
     },
   });
 
+  const lowestPayment = paymentAgg.reduce((a, b) =>
+    a[1].avgPayment < b[1].avgPayment ? a : b
+  );
+  document
+    .querySelector("#avgPaymentValue")
+    .parentElement.querySelector(
+      ".chart-note"
+    ).textContent = `${formatPaymentLabel(
+    lowestPayment[0]
+  )} payments typically smaller`;
+
   // === Chart 2: Avg Review Score ===
   window.paymentChart2 = new Chart(document.getElementById("avgReviewScore"), {
     type: "bar",
@@ -125,6 +137,17 @@ function drawPaymentCharts(data) {
       },
     },
   });
+
+  const lowestReview = paymentAgg.reduce((a, b) =>
+    a[1].avgReview < b[1].avgReview ? a : b
+  );
+  document
+    .querySelector("#avgReviewScore")
+    .parentElement.querySelector(
+      ".chart-note"
+    ).textContent = `${formatPaymentLabel(
+    lowestReview[0]
+  )} shows lower satisfaction`;
 
   // === Chart 3: Order Value Distribution ===
   const bins = [0, 50, 100, 150, 200, 1000];
@@ -171,6 +194,17 @@ function drawPaymentCharts(data) {
     }
   );
 
+  const creditGrowth =
+    ((binned["credit_card"]?.[2] ?? 0) + (binned["credit_card"]?.[3] ?? 0)) /
+    d3.sum(binned["credit_card"] ?? []);
+  document
+    .querySelector("#orderValueDistribution")
+    .parentElement.querySelector(
+      ".chart-note"
+    ).textContent = `Credit card usage in higher value orders is ${(
+    creditGrowth * 100
+  ).toFixed(0)}%`;
+
   // === Chart 4: Payment Type by Product Category ===
   const catPayAgg = d3.rollups(
     data,
@@ -207,6 +241,25 @@ function drawPaymentCharts(data) {
       },
     }
   );
+
+  // Find which category has highest credit card usage
+  let topCat = "";
+  let topRatio = 0;
+  catPayAgg.forEach(([cat, list]) => {
+    const total = d3.sum(list, (d) => d[1]);
+    const credit = list.find(([type]) => type === "credit_card");
+    const ratio = credit ? credit[1] / total : 0;
+    if (ratio > topRatio) {
+      topRatio = ratio;
+      topCat = cat;
+    }
+  });
+
+  document
+    .querySelector("#paymentByCategory")
+    .parentElement.querySelector(".chart-note").textContent = topCat
+    ? `${topCat} dominated by credit cards (${(topRatio * 100).toFixed(0)}%)`
+    : "No clear leader by credit card usage";
 }
 function formatPaymentLabel(label) {
   switch (label) {
