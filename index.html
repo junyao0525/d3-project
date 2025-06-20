@@ -222,96 +222,6 @@
       </div>
     </div>
 
-    <!-- Payment Analysis Tab -->
-    <div class="dashboard payment-tab">
-      <div class="dashboard-content">
-        <div class="section-title">💳 Payment Method Performance</div>
-
-        <div class="filter-container">
-          <label for="payment-filter">Filter by Payment Type:</label>
-          <select id="payment-filter">
-            <option value="">All Methods</option>
-            <option value="credit_card">Credit Card</option>
-            <option value="boleto">Boleto</option>
-            <option value="voucher">Voucher</option>
-            <option value="debit_card">Debit Card</option>
-          </select>
-          <button id="reset-payment-filter" class="reset-btn">
-            Reset Selection
-          </button>
-          <div class="active-filter" id="payment-filter-display">
-            All payment types
-          </div>
-        </div>
-
-        <div class="section-title">💡 Payment Insights</div>
-        <div class="dashboard-grid insights">
-          <div class="info-card" id="insight-highest-payment">
-            <h3>💰 Highest Avg Payment</h3>
-            <div class="value" id="highest-payment-value">...</div>
-            <div class="label" id="highest-payment-label">...</div>
-            <div class="trend-indicator trend-up" id="highest-payment-trend">
-              ...
-            </div>
-          </div>
-
-          <!-- Best Customer Feedback -->
-          <div class="info-card" id="insight-best-review">
-            <h3>🌟 Best Customer Feedback</h3>
-            <div class="value" id="best-review-value">...</div>
-            <div class="label" id="best-review-label">...</div>
-            <div class="trend-indicator trend-up" id="best-review-trend">
-              ...
-            </div>
-          </div>
-
-          <!-- Most Used Payment -->
-          <div class="info-card" id="insight-most-popular">
-            <h3>📊 Most Used Payment</h3>
-            <div class="value" id="most-used-value">...</div>
-            <div class="label" id="most-used-label">...</div>
-            <div class="trend-indicator trend-neutral" id="most-used-trend">
-              ...
-            </div>
-          </div>
-        </div>
-
-        <div class="section-title">📊 Payment Method Analysis</div>
-        <div class="chart-container big">
-          <div class="chart-title">Payment Method Distribution Over Time</div>
-          <canvas id="orderValueDistribution" height="400"></canvas>
-          <div class="chart-note">Loading...</div>
-        </div>
-        <div class="dashboard-grid visuals">
-          <div class="chart-container">
-            <div class="chart-title">Avg. Payment Value by Type</div>
-            <canvas id="avgPaymentValue" height="400"></canvas>
-            <div class="chart-note">Loading...</div>
-          </div>
-
-          <div class="chart-container">
-            <div class="chart-title">Customer Satisfaction by Method</div>
-            <canvas id="avgReviewScore" height="400"></canvas>
-            <div class="chart-note">Loading...</div>
-          </div>
-        </div>
-        <div class="chart-container big">
-          <div class="chart-title">Payment Method by Product Category</div>
-          <canvas id="paymentByCategory" height="400"></canvas>
-          <div class="chart-note">Loading...</div>
-        </div>
-        <div class="insight-box">
-          <div class="insight-icon">💡</div>
-          <div class="insight-content">
-            <strong>Key Insight:</strong> While credit cards dominate
-            transaction volume and value, voucher payments show significantly
-            higher customer satisfaction. Consider promoting voucher options for
-            high-value purchases to improve customer experience.
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- Product Performance Tab -->
     <div class="dashboard product-tab">
       <div class="dashboard-content">
@@ -413,7 +323,6 @@
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://d3js.org/topojson.v3.min.js"></script>
     <script src="app_q1.js"></script>
-    <script src="app_q2.js"></script>
     <script src="app_q3.js"></script>
     <script>
       function switchTab(index) {
