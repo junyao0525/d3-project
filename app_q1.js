@@ -482,8 +482,8 @@ let selectedState = null; // Track selected state
 function drawMap(data) {
   console.log("🔍 Starting drawMap");
 
-  const width = 600;
-  const height = 600;
+  const width = 800;
+  const height = 400; // ↓ Reduce height
 
   d3.json(
     "https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/brazil-states.geojson"
@@ -503,7 +503,7 @@ function drawMap(data) {
       const projection = d3
         .geoMercator()
         .center([-54.5, -15.5])
-        .scale(700)
+        .scale(500)
         .translate([width / 2, height / 2]);
 
       const path = d3.geoPath().projection(projection);

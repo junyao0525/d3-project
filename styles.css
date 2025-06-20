@@ -234,7 +234,7 @@ canvas {
 
 .map-svg {
   width: 100%;
-  height: 100%;
+  height: 400px;
   display: block;
 }
 .states {
@@ -315,11 +315,25 @@ canvas {
 }
 
 .dashboard-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+  display: flex;
   gap: 30px;
   margin-bottom: 30px;
+
+  justify-content: center; /* horizontally center */
+  flex-wrap: nowrap; /* stay in one line */
+  overflow-x: auto; /* scroll if content too wide */
 }
+
+.dashboard-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* 2 columns */
+  gap: 30px;
+  margin-bottom: 30px;
+  max-width: 1200px; /* Optional: limit width */
+  margin-left: auto;
+  margin-right: auto; /* Center in window */
+}
+
 
 .info-card {
   background: white;
@@ -341,7 +355,7 @@ canvas {
 }
 
 .info-card .value {
-  font-size: 2.5rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: #0ea5e9;
   margin-bottom: 10px;
