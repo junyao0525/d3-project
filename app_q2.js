@@ -1,4 +1,3 @@
-// app_q2.js
 // === Question 2: Payment Analysis ===
 d3.csv("olist_combined_clean_3.csv").then((data) => {
   preprocess(data);
@@ -8,6 +7,18 @@ d3.csv("olist_combined_clean_3.csv").then((data) => {
   setupFilterEvents2(data);
 });
 
+// === Optional: Friendly labels for payment types ===
+const paymentLabels = {
+  credit_card: "Credit Card",
+  boleto: "Boleto",
+  voucher: "Voucher",
+  debit_card: "Debit Card",
+};
+
+function formatPaymentLabel(type) {
+  return paymentLabels[type] || type;
+}
+
 function initPaymentDashboard(data) {
   const paymentTypes = Array.from(new Set(data.map((d) => d.payment_type)));
 
@@ -15,7 +26,7 @@ function initPaymentDashboard(data) {
   paymentTypes.forEach((type) => {
     const opt = document.createElement("option");
     opt.value = type;
-    opt.textContent = type;
+    opt.textContent = formatPaymentLabel(type);
     select.appendChild(opt);
   });
 
@@ -25,22 +36,24 @@ function initPaymentDashboard(data) {
       ? data.filter((d) => d.payment_type === selected)
       : data;
 
-    document.getElementById("payment-filter-display").textContent =
-      selected || "All payment types";
+    document.getElementById("payment-filter-display").textContent = selected
+      ? formatPaymentLabel(selected)
+      : "All payment types";
 
     drawPaymentCharts(filtered);
     showPaymentInsights(filtered);
   });
 }
+
 function drawPaymentCharts(data) {
-  // === Destroy existing charts if any ===
+  // Destroy existing charts
   ["paymentChart1", "paymentChart2", "paymentChart3", "paymentChart4"].forEach(
     (chart) => {
       if (window[chart]) window[chart].destroy();
     }
   );
 
-  // === Aggregation ===
+  // Aggregation
   const paymentAgg = d3.rollups(
     data,
     (v) => ({
@@ -50,7 +63,7 @@ function drawPaymentCharts(data) {
     (d) => d.payment_type
   );
 
-  const labels = paymentAgg.map((d) => d[0]);
+  const labels = paymentAgg.map((d) => formatPaymentLabel(d[0]));
   const avgPayments = paymentAgg.map((d) => d[1].avgPayment);
   const avgReviews = paymentAgg.map((d) => d[1].avgReview);
 
@@ -58,7 +71,7 @@ function drawPaymentCharts(data) {
   window.paymentChart1 = new Chart(document.getElementById("avgPaymentValue"), {
     type: "bar",
     data: {
-      labels: labels,
+      labels,
       datasets: [
         {
           label: "Avg Payment Value (R$)",
@@ -85,7 +98,7 @@ function drawPaymentCharts(data) {
   window.paymentChart2 = new Chart(document.getElementById("avgReviewScore"), {
     type: "bar",
     data: {
-      labels: labels,
+      labels,
       datasets: [
         {
           label: "Avg Review Score",
@@ -135,7 +148,7 @@ function drawPaymentCharts(data) {
   });
 
   const histDatasets = paymentTypes.map((type, i) => ({
-    label: type,
+    label: formatPaymentLabel(type),
     data: binned[type],
     backgroundColor: `hsl(${i * 60}, 70%, 60%)`,
   }));
@@ -168,7 +181,7 @@ function drawPaymentCharts(data) {
 
   const categories = catPayAgg.map((d) => d[0]);
   const datasets = paymentTypes.map((type, i) => ({
-    label: type,
+    label: formatPaymentLabel(type),
     data: categories.map((cat) => {
       const found = catPayAgg.find((d) => d[0] === cat);
       const sub = found ? found[1].find(([t]) => t === type) : undefined;
@@ -183,7 +196,7 @@ function drawPaymentCharts(data) {
       type: "bar",
       data: {
         labels: categories,
-        datasets: datasets,
+        datasets,
       },
       options: {
         responsive: true,
@@ -195,41 +208,109 @@ function drawPaymentCharts(data) {
     }
   );
 }
+function formatPaymentLabel(label) {
+  switch (label) {
+    case "credit_card":
+      return "Credit Card";
+    case "debit_card":
+      return "Debit Card";
+    case "boleto":
+      return "Boleto";
+    case "voucher":
+      return "Voucher";
+    case "":
+    case null:
+    case undefined:
+      return "Unknown";
+    default:
+      return label.charAt(0).toUpperCase() + label.slice(1);
+  }
+}
 function showPaymentInsights(data) {
-  const paymentAgg = d3.rollups(
-    data,
-    (v) => ({
-      count: v.length,
-      avgPayment: d3.mean(v, (d) => +d.payment_value),
-      avgReview: d3.mean(v, (d) => +d.review_score),
-    }),
-    (d) => d.payment_type
-  );
-  console.log("Sample data row:", data[0]);
-  // Highest payment
+  const paymentAgg = d3
+    .rollups(
+      data,
+      (v) => ({
+        count: v.length,
+        avgPayment: d3.mean(v, (d) => +d.payment_value),
+        avgReview: d3.mean(v, (d) => +d.review_score),
+      }),
+      (d) => d.payment_type
+    )
+    .filter(([type]) => type); // exclude empty/null types
+
+  if (!paymentAgg.length) return;
+
+  // Calculate overall average values for trend comparison
+  const totalCount = d3.sum(paymentAgg, ([, val]) => val.count);
+  const overallAvgPayment =
+    d3.sum(paymentAgg, ([, val]) => val.avgPayment * val.count) / totalCount;
+  const overallAvgReview =
+    d3.sum(paymentAgg, ([, val]) => val.avgReview * val.count) / totalCount;
+
+  // === Highest Avg Payment
   const topPayment = paymentAgg.reduce((a, b) =>
     a[1].avgPayment > b[1].avgPayment ? a : b
   );
-  document.getElementById("top-payment-type").textContent = `${
-    topPayment[0]
-  } (R$${topPayment[1].avgPayment.toFixed(2)})`;
 
-  // Best review
+  const paymentDiff = topPayment[1].avgPayment - overallAvgPayment;
+  const paymentTrendText =
+    paymentAgg.length > 1
+      ? `${Math.abs((paymentDiff / overallAvgPayment) * 100).toFixed(0)}% ${
+          paymentDiff >= 0 ? "higher" : "lower"
+        } than average`
+      : "Only method shown";
+
+  document.querySelector(
+    "#insight-highest-payment .value"
+  ).textContent = `R$${topPayment[1].avgPayment.toFixed(2)}`;
+  document.querySelector(
+    "#insight-highest-payment .label"
+  ).textContent = `${formatPaymentLabel(topPayment[0])} payments`;
+  document.querySelector(
+    "#insight-highest-payment .trend-indicator"
+  ).textContent = paymentTrendText;
+
+  // === Best Customer Feedback
   const topReview = paymentAgg.reduce((a, b) =>
     a[1].avgReview > b[1].avgReview ? a : b
   );
-  document.getElementById("top-review-type").textContent = `${
-    topReview[0]
-  } (${topReview[1].avgReview.toFixed(2)})`;
 
-  // Most used
+  const reviewDiff = topReview[1].avgReview - overallAvgReview;
+  const reviewTrendText =
+    paymentAgg.length > 1
+      ? `${Math.abs((reviewDiff / overallAvgReview) * 100).toFixed(0)}% ${
+          reviewDiff >= 0 ? "higher" : "lower"
+        } satisfaction`
+      : "Only method shown";
+
+  document.querySelector(
+    "#insight-best-review .value"
+  ).textContent = `${topReview[1].avgReview.toFixed(2)} ★`;
+  document.querySelector(
+    "#insight-best-review .label"
+  ).textContent = `${formatPaymentLabel(topReview[0])} payments`;
+  document.querySelector("#insight-best-review .trend-indicator").textContent =
+    reviewTrendText;
+
+  // === Most Used
   const mostUsed = paymentAgg.reduce((a, b) =>
     a[1].count > b[1].count ? a : b
   );
-  document.getElementById(
-    "most-used-type"
-  ).textContent = `${mostUsed[0]} (${mostUsed[1].count} orders)`;
+
+  const usagePercent = ((mostUsed[1].count / totalCount) * 100).toFixed(1);
+  document.querySelector(
+    "#insight-most-popular .value"
+  ).textContent = `${usagePercent}%`;
+  document.querySelector(
+    "#insight-most-popular .label"
+  ).textContent = `${formatPaymentLabel(mostUsed[0])} dominance`;
+  document.querySelector("#insight-most-popular .trend-indicator").textContent =
+    paymentAgg.length > 1 ? "Stable from last quarter" : "Only method shown";
+
+  console.log("📊 Payment Aggregation (cleaned):", paymentAgg);
 }
+
 function setupFilterEvents2(originalData) {
   document
     .getElementById("reset-payment-filter")

@@ -252,36 +252,41 @@
         <div class="dashboard-grid insights">
           <div class="info-card" id="insight-highest-payment">
             <h3>💰 Highest Avg Payment</h3>
-            <div class="value">R$287.50</div>
-            <div class="label">Credit Card payments</div>
-            <div class="trend-indicator trend-up">15% higher than average</div>
+            <div class="value" id="highest-payment-value">...</div>
+            <div class="label" id="highest-payment-label">...</div>
+            <div class="trend-indicator trend-up" id="highest-payment-trend">
+              ...
+            </div>
           </div>
 
+          <!-- Best Customer Feedback -->
           <div class="info-card" id="insight-best-review">
             <h3>🌟 Best Customer Feedback</h3>
-            <div class="value">4.5/5</div>
-            <div class="label">Voucher payments</div>
-            <div class="trend-indicator trend-up">12% higher satisfaction</div>
+            <div class="value" id="best-review-value">...</div>
+            <div class="label" id="best-review-label">...</div>
+            <div class="trend-indicator trend-up" id="best-review-trend">
+              ...
+            </div>
           </div>
 
+          <!-- Most Used Payment -->
           <div class="info-card" id="insight-most-popular">
             <h3>📊 Most Used Payment</h3>
-            <div class="value">73.4%</div>
-            <div class="label">Credit Card dominance</div>
-            <div class="trend-indicator trend-neutral">
-              Stable from last quarter
+            <div class="value" id="most-used-value">...</div>
+            <div class="label" id="most-used-label">...</div>
+            <div class="trend-indicator trend-neutral" id="most-used-trend">
+              ...
             </div>
           </div>
         </div>
 
         <div class="section-title">📊 Payment Method Analysis</div>
+        <div class="chart-container big">
+          <div class="chart-title">Payment Method Distribution Over Time</div>
+          <canvas id="orderValueDistribution" height="400"></canvas>
+          <div class="chart-note">Credit card usage growing 3% quarterly</div>
+        </div>
         <div class="dashboard-grid visuals">
-          <div class="chart-container big">
-            <div class="chart-title">Payment Method Distribution Over Time</div>
-            <canvas id="paymentTrends" height="400"></canvas>
-            <div class="chart-note">Credit card usage growing 3% quarterly</div>
-          </div>
-
           <div class="chart-container">
             <div class="chart-title">Avg. Payment Value by Type</div>
             <canvas id="avgPaymentValue" height="400"></canvas>
@@ -293,14 +298,12 @@
             <canvas id="avgReviewScore" height="400"></canvas>
             <div class="chart-note">Boleto shows lower satisfaction</div>
           </div>
-
-          <div class="chart-container big">
-            <div class="chart-title">Payment Method by Product Category</div>
-            <canvas id="paymentByCategory" height="400"></canvas>
-            <div class="chart-note">Electronics dominated by credit cards</div>
-          </div>
         </div>
-
+        <div class="chart-container big">
+          <div class="chart-title">Payment Method by Product Category</div>
+          <canvas id="paymentByCategory" height="400"></canvas>
+          <div class="chart-note">Electronics dominated by credit cards</div>
+        </div>
         <div class="insight-box">
           <div class="insight-icon">💡</div>
           <div class="insight-content">
