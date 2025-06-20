@@ -113,54 +113,55 @@ function drawCharts(data) {
   const review = stateAgg.map((d) => d[1].review);
   const freight = stateAgg.map((d) => d[1].freight);
 
-  charts.revenueByState = drawBarChart(
-    "revenueByState",
-    labels,
-    revenue,
-    "Revenue (R$)",
-    "#0ea5e9"
-  );
-  charts.deliveryTimeByState = drawBarChart(
-    "deliveryTimeByState",
-    labels,
-    delivery,
-    "Avg Delivery Time (days)",
-    "#38bdf8"
-  );
-  charts.reviewScoreByState = drawBarChart(
-    "reviewScoreByState",
-    labels,
-    review,
-    "Avg Review Score",
-    "#f59e0b"
-  );
-  charts.freightVsRevenue = drawBarChart(
-    "freightVsRevenue",
-    labels,
-    freight,
-    "Avg Freight (R$)",
-    "#10b981"
-  );
-
-  // Update chart note for top 5 revenue
   const total = d3.sum(revenue);
   const top5Total = revenue
     .slice()
     .sort((a, b) => b - a)
     .slice(0, 5)
     .reduce((a, b) => a + b, 0);
-  const note = document
-    .querySelector("#revenueByState")
-    ?.parentElement?.querySelector(".chart-note");
-  if (note) {
-    note.textContent = `Top 5 states account for ${(
-      (top5Total / total) *
-      100
-    ).toFixed(1)}% of total revenue`;
-  }
+
+  charts.revenueByState = drawBarChart(
+    "revenueByState",
+    labels,
+    revenue,
+    "Revenue (R$)",
+    "#0ea5e9",
+    `Top 5 states account for ${((top5Total / total) * 100).toFixed(
+      1
+    )}% of total revenue`
+  );
+
+  charts.deliveryTimeByState = drawBarChart(
+    "deliveryTimeByState",
+    labels,
+    delivery,
+    "Avg Delivery Time (days)",
+    "#38bdf8",
+    `Fastest avg delivery: ${Math.min(...delivery).toFixed(1)} days`
+  );
+
+  charts.reviewScoreByState = drawBarChart(
+    "reviewScoreByState",
+    labels,
+    review,
+    "Avg Review Score",
+    "#f59e0b",
+    `Highest satisfaction: ${Math.max(...review).toFixed(1)} ★`
+  );
+
+  charts.freightVsRevenue = drawBarChart(
+    "freightVsRevenue",
+    labels,
+    freight,
+    "Avg Freight (R$)",
+    "#10b981",
+    `Freight range: R$ ${Math.min(...freight).toFixed(2)} – R$ ${Math.max(
+      ...freight
+    ).toFixed(2)}`
+  );
 }
 
-function drawBarChart(canvasId, labels, values, label, color) {
+function drawBarChart(canvasId, labels, values, label, color, noteText = null) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) {
     console.warn(`Canvas not found: #${canvasId}`);
@@ -174,6 +175,12 @@ function drawBarChart(canvasId, labels, values, label, color) {
   }
 
   if (charts[canvasId]) charts[canvasId].destroy();
+
+  // Set chart note if provided
+  const note = canvas.parentElement?.querySelector(".chart-note");
+  if (note && noteText) {
+    note.textContent = noteText;
+  }
 
   return new Chart(ctx, {
     type: "bar",
