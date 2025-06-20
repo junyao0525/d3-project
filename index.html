@@ -8,462 +8,86 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap"
       rel="stylesheet"
     />
-    <style>
-      * {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
+    <link rel="stylesheet" href="styles.css" />
+    <!-- <style>
+      /* Tab-specific styles */
+      .geographic-tab .info-card {
+        background: linear-gradient(
+          135deg,
+          rgba(56, 189, 248, 0.1),
+          rgba(14, 165, 233, 0.1)
+        );
+        border: 1px solid rgba(14, 165, 233, 0.3);
       }
-
-      body {
-        font-family: "Inter", sans-serif;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        margin: 0;
-        padding: 0;
-        min-height: 100vh;
-        color: #333;
+      .geographic-tab .info-card::before {
+        background: linear-gradient(90deg, #38bdf8, #0ea5e9);
       }
-
-      header {
-        background: rgba(30, 41, 59, 0.95);
-        backdrop-filter: blur(10px);
-        color: #fff;
-        padding: 20px 40px;
-        text-align: center;
-        font-size: 2.5rem;
-        font-weight: 700;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-        position: sticky;
-        top: 0;
-        z-index: 100;
-      }
-
-      .tabs {
-        display: flex;
-        justify-content: center;
-        background: rgba(51, 65, 85, 0.9);
-        backdrop-filter: blur(10px);
-        padding: 15px;
-        gap: 15px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        position: sticky;
-        top: 84px;
-        z-index: 100;
-      }
-
-      .tab-btn {
-        background: linear-gradient(135deg, #64748b, #475569);
-        color: white;
-        border: none;
-        border-radius: 12px;
-        padding: 12px 25px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-      }
-
-      .tab-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-      }
-
-      .tab-btn.active {
-        background: linear-gradient(135deg, #38bdf8, #0ea5e9);
-        color: white;
-        transform: translateY(-2px);
-      }
-
-      .dashboard {
-        display: none;
-        padding: 30px 40px;
-      }
-
-      .dashboard.active {
-        display: block;
-      }
-
-      .dashboard-content {
-        max-width: 1400px;
-        margin: 0 auto;
-      }
-
-      .filter-container {
-        margin-bottom: 30px;
-        display: flex;
-        gap: 20px;
-        flex-wrap: wrap;
-        align-items: center;
-        background: rgba(255, 255, 255, 0.2);
-        padding: 20px;
-        border-radius: 15px;
-        backdrop-filter: blur(10px);
-      }
-
-      .filter-container label {
-        color: white;
-        font-weight: 600;
-        font-size: 1.1rem;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-
-      .filter-container select {
-        padding: 10px 15px;
-        border-radius: 8px;
-        border: none;
-        background: white;
-        font-weight: 500;
-        min-width: 200px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-      }
-      .chart-title {
-        font-size: 1.2rem;
-        font-weight: 700;
-        text-align: center;
-        color: #1e293b;
-        margin-bottom: 20px;
-        border-bottom: 2px solid #e2e8f0;
-        padding-bottom: 8px;
-      }
-      .map-container {
-        background: white;
-        border-radius: 20px;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-        padding: 30px;
-        margin-bottom: 40px;
-        position: relative;
-        overflow: hidden;
-        justify-content: center;
-        
-      }
-      .map-box{
-        display: flex;
-        justify-content: space-between; /* horizontal centering */
-        align-items: center; /* vertical centering */
-        
-      }
-      .map-container::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, #38bdf8, #0ea5e9, #0284c7);
-      }
-
-      .chart-container {
-        background: white;
-        border-radius: 20px;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-        padding: 30px;
-        margin-bottom: 40px;
-        position: relative;
-        overflow: hidden;
-      }
-
-      .chart-container::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, #f59e0b, #d97706, #b45309);
-      }
-
-      canvas {
-        border-radius: 12px;
-        width: 100% !important;
-      }
-
-      .map-title {
-        text-align: center;
-        font-size: 1.8rem;
-        font-weight: 700;
-        color: #1e293b;
-        margin-bottom: 20px;
-        justify-content: center;
-      }
-
-      .legend {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        margin-top: 20px;
-        gap: 15px;
-      }
-
-      .legend-item {
-        display: flex;
-        align-items: center;
-        gap: 5px;
-        font-size: 0.9rem;
-        color: #64748b;
-      }
-
-      .legend-color {
-        width: 20px;
-        height: 15px;
-        border-radius: 3px;
-      }
-
-      .state-info {
-        position: absolute;
-        background: rgba(0, 0, 0, 0.8);
-        color: white;
-        padding: 10px 15px;
-        border-radius: 8px;
-        pointer-events: none;
-        font-size: 0.9rem;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-        z-index: 1000;
-        opacity: 0;
-        transition: opacity 0.2s;
-      }
-
-      .selected-state-info {
-        background: linear-gradient(135deg, #38bdf8, #0ea5e9);
-        color: white;
-        padding: 20px;
-        border-radius: 15px;
-        margin-top: 20px;
-        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-      }
-
-      .loading {
-        text-align: center;
-        color: white;
-        font-size: 1.2rem;
-        padding: 50px;
-      }
-
-      #brazil-map {
-        height: 600px;
-        width: 50%;
-      }
-
-      .map-svg {
-        width: 100%;
-        height: 100%;
-        display: block;
-      }
-      .states {
-        fill: none;
-        stroke: #fff;
-        stroke-linejoin: round;
-        stroke-width: 1;
-        transition: all 0.3s ease;
-      }
-
-      .state-borders {
-        fill: none;
-        stroke: #fff;
-        stroke-width: 1.5;
-      }
-
-      .reset-btn {
-        padding: 10px 20px;
-        background: linear-gradient(135deg, #f59e0b, #d97706);
-        color: white;
-        border: none;
-        border-radius: 8px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-      }
-
-      .reset-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-      }
-
-      .state-label {
-        pointer-events: none;
-        font-size: 12px;
-        font-weight: bold;
-        text-anchor: middle;
-        transition: all 0.3s ease;
-      }
-
-      .state-highlight {
-        font-size: 14px;
-        font-weight: 900;
-      }
-
-      .legend-gradient {
-        height: 20px;
-        width: 300px;
-        background: linear-gradient(to right, #f0f9ff, #0c4a6e);
-        border-radius: 4px;
-        margin: 0 auto;
-        position: relative;
-      }
-
-      .legend-min {
-        position: absolute;
-        left: 0;
-        top: 25px;
-        font-size: 0.8rem;
-        color: #64748b;
-      }
-
-      .legend-max {
-        position: absolute;
-        right: 0;
-        top: 25px;
-        font-size: 0.8rem;
-        color: #64748b;
-      }
-
-      .legend-title {
-        text-align: center;
-        font-size: 0.9rem;
-        margin-top: 5px;
-        color: #64748b;
-        font-weight: 600;
-      }
-
-      .dashboard-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
-        gap: 30px;
-        margin-bottom: 30px;
-      }
-
-      .info-card {
-        background: white;
-        border-radius: 20px;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-        padding: 30px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        position: relative;
-      }
-
-      .info-card h3 {
-        color: #1e293b;
-        margin-bottom: 15px;
-        font-size: 1.4rem;
-      }
-
-      .info-card .value {
-        font-size: 2.5rem;
-        font-weight: 700;
+      .geographic-tab .info-card .value {
         color: #0ea5e9;
-        margin-bottom: 10px;
       }
 
-      .info-card .label {
-        font-size: 1rem;
-        color: #64748b;
+      .payment-tab .info-card {
+        background: linear-gradient(
+          135deg,
+          rgba(139, 92, 246, 0.1),
+          rgba(124, 58, 237, 0.1)
+        );
+        border: 1px solid rgba(139, 92, 246, 0.3);
+      }
+      .payment-tab .info-card::before {
+        background: linear-gradient(90deg, #8b5cf6, #7c3aed);
+      }
+      .payment-tab .info-card .value {
+        color: #7c3aed;
       }
 
-      .info-card::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, #10b981, #059669, #047857);
-        border-radius: 4px 4px 0 0;
+      .product-tab .info-card {
+        background: linear-gradient(
+          135deg,
+          rgba(16, 185, 129, 0.1),
+          rgba(5, 150, 105, 0.1)
+        );
+        border: 1px solid rgba(16, 185, 129, 0.3);
+      }
+      .product-tab .info-card::before {
+        background: linear-gradient(90deg, #10b981, #059669);
+      }
+      .product-tab .info-card .value {
+        color: #059669;
       }
 
-      .section-title {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: white;
-        margin: 30px 0 20px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
+      /* Tab-specific chart container styles */
+      .geographic-tab .chart-container::before {
+        background: linear-gradient(90deg, #38bdf8, #0ea5e9);
+      }
+      .payment-tab .chart-container::before {
+        background: linear-gradient(90deg, #8b5cf6, #7c3aed);
+      }
+      .product-tab .chart-container::before {
+        background: linear-gradient(90deg, #10b981, #059669);
       }
 
-      .active-filter {
-        background: rgba(255, 255, 255, 0.2);
-        padding: 5px 15px;
-        border-radius: 20px;
-        font-size: 1rem;
-        font-weight: 600;
+      /* Unique layout for payment tab */
+      .payment-tab .dashboard-grid.insights {
+        grid-template-columns: repeat(3, 1fr);
+      }
+      .payment-tab .dashboard-grid.visuals {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .payment-tab .chart-container.big {
+        grid-column: span 2;
       }
 
-      .chart-title {
-        font-size: 1.3rem;
-        font-weight: 600;
-        color: #1e293b;
-        margin-bottom: 15px;
-        text-align: center;
+      /* Product tab specific styles */
+      .product-tab .dashboard-grid {
+        grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
       }
-
-      .selection-info {
-        background: linear-gradient(135deg, #f59e0b, #d97706);
-        color: white;
-        padding: 12px 20px;
-        border-radius: 10px;
-        margin-bottom: 20px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      .product-tab .chart-container.wide {
+        grid-column: span 2;
       }
-
-      .selection-info .clear-btn {
-        margin-left: auto;
-        background: rgba(255, 255, 255, 0.2);
-        border: none;
-        color: white;
-        padding: 5px 15px;
-        border-radius: 20px;
-        cursor: pointer;
-        transition: all 0.3s;
-      }
-
-      .selection-info .clear-btn:hover {
-        background: rgba(255, 255, 255, 0.3);
-      }
-
-      @media (max-width: 768px) {
-        .dashboard-grid {
-          grid-template-columns: 1fr;
-        }
-
-        .tabs {
-          flex-wrap: wrap;
-        }
-
-        header {
-          font-size: 1.8rem;
-          padding: 15px 20px;
-        }
-
-        .map-container,
-        .chart-container {
-          padding: 20px;
-        }
-      }
-    </style>
+    </style> -->
   </head>
-  <script>
-  function switchTab(index) {
-    const dashboards = document.querySelectorAll('.dashboard');
-    const tabButtons = document.querySelectorAll('.tab-btn');
 
-    dashboards.forEach((dash, i) => {
-      dash.classList.toggle('active', i === index);
-    });
-
-    tabButtons.forEach((btn, i) => {
-      btn.classList.toggle('active', i === index);
-    });
-  }
-</script>
   <body>
     <header>🛒 Olist E-Commerce Analytics Dashboard</header>
     <div class="loading" id="loading">Loading data...</div>
@@ -487,7 +111,7 @@
       </button>
     </div>
 
-    <div class="dashboard active">
+    <div class="dashboard active geographic-tab">
       <div class="dashboard-content">
         <div class="filter-container">
           <label for="geo-filter">🎯 Filter by State:</label>
@@ -503,85 +127,118 @@
         </div>
 
         <div class="section-title">
-          <span>📊 Key Metrics</span>
+          <span>📊 Regional Performance Metrics</span>
         </div>
 
         <div class="dashboard-grid">
           <div class="info-card">
             <h3>Total Revenue</h3>
-            <div class="value" id="total-revenue">error</div>
-            <div class="label">Across all states</div>
+            <div class="value" id="total-revenue">Loading</div>
+            <div class="label">
+              <div class="label">Loading...</div>
+            </div>
           </div>
 
           <div class="info-card">
             <h3>Avg. Delivery Time</h3>
-            <div class="value" id="avg-delivery">error</div>
-            <div class="label">Nationwide average</div>
+            <div class="value" id="avg-delivery">Loading</div>
+            <div class="label">
+              Nationwide average |
+              <div class="label">Loading...</div>
+            </div>
           </div>
 
           <div class="info-card">
             <h3>Customer Satisfaction</h3>
-            <div class="value" id="avg-review">error</div>
-            <div class="label">Average review score</div>
+            <div class="value" id="avg-review">Loading</div>
+            <div class="label">
+              <div class="label">Loading...</div>
+            </div>
           </div>
         </div>
-
         <div class="section-title">
-          <span>🗺️ Geographic Analysis</span>
+          <span>🗺️ Geographic Distribution</span>
         </div>
 
         <div class="map-container">
+          <div class="map-title">💰 Total Revenue by Brazilian State</div>
           <div class="map-box">
-            <div class="map-title">💰 Total Revenue by Brazilian State</div>
             <div id="brazil-map">
               <svg class="map-svg" style="background-color: #f9f9f9"></svg>
             </div>
+            <div class="map-info-panel">
+              <div class="map-title">Regional Performance Summary</div>
+              <div class="map-stats">
+                <div class="stat-item">
+                  <div class="stat-label">Top Performing State</div>
+                  <div class="stat-value">Loading...</div>
+                  <div class="stat-detail">Loading...</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-label">Fastest Delivery</div>
+                  <div class="stat-value">Loading...</div>
+                  <div class="stat-detail">Loading...</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-label">Highest Satisfaction</div>
+                  <div class="stat-value">Loading...</div>
+                  <div class="stat-detail">Loading...</div>
+                </div>
+              </div>
+            </div>
           </div>
-                      <div id="selected-state-info"></div>
+          <div id="selected-state-info"></div>
+        </div>
+      </div>
 
+      <div class="section-title">
+        <span>📈 State-by-State Comparison</span>
+      </div>
+
+      <div class="dashboard-grid">
+        <div class="chart-container">
+          <div class="chart-title">Revenue Distribution by State</div>
+          <canvas id="revenueByState" height="400"></canvas>
+          <div class="chart-note">
+            Top 5 states account for 68% of total revenue
           </div>
-
         </div>
 
-        <div class="section-title">
-          <span>📈 Performance Metrics</span>
+        <div class="chart-container">
+          <div class="chart-title">Delivery Efficiency</div>
+          <canvas id="deliveryTimeByState" height="400"></canvas>
+          <div class="chart-note">
+            Northern states show longer delivery times
+          </div>
         </div>
 
-        <div class="dashboard-grid">
-          <div class="chart-container">
-            <div class="chart-title">Revenue by State</div>
-            <canvas id="revenueByState" height="400"></canvas>
-          </div>
+        <div class="chart-container">
+          <div class="chart-title">Customer Satisfaction Scores</div>
+          <canvas id="reviewScoreByState" height="400"></canvas>
+          <div class="chart-note">Southern states consistently rate higher</div>
+        </div>
 
-          <div class="chart-container">
-            <div class="chart-title">Delivery Time by State</div>
-            <canvas id="deliveryTimeByState" height="400"></canvas>
-          </div>
-
-          <div class="chart-container">
-            <div class="chart-title">Review Scores by State</div>
-            <canvas id="reviewScoreByState" height="400"></canvas>
-          </div>
-
-          <div class="chart-container">
-            <div class="chart-title">Freight Cost vs Revenue</div>
-            <canvas id="freightVsRevenue" height="400"></canvas>
-          </div>
+        <div class="chart-container">
+          <div class="chart-title">Freight Cost vs Revenue</div>
+          <canvas id="freightVsRevenue" height="400"></canvas>
+          <div class="chart-note">Higher freight costs in remote areas</div>
         </div>
       </div>
     </div>
 
-    <div class="dashboard">
+    <!-- Payment Analysis Tab -->
+    <div class="dashboard payment-tab">
       <div class="dashboard-content">
-        
-        <!-- Section Header -->
-        <div class="section-title">💳 Payment Analysis</div>
+        <div class="section-title">💳 Payment Method Performance</div>
 
-        <!-- Filter Bar -->
         <div class="filter-container">
           <label for="payment-filter">Filter by Payment Type:</label>
           <select id="payment-filter">
-            <option value="">All</option>
+            <option value="">All Methods</option>
+            <option value="credit_card">Credit Card</option>
+            <option value="boleto">Boleto</option>
+            <option value="voucher">Voucher</option>
+            <option value="debit_card">Debit Card</option>
           </select>
           <button id="reset-payment-filter" class="reset-btn">
             Reset Selection
@@ -589,121 +246,183 @@
           <div class="active-filter" id="payment-filter-display">
             All payment types
           </div>
-           
         </div>
 
-        <!-- Key Insights Section -->
-        <div class="section-title">💡 Key Insights</div>
-        <div class="dashboard-grid">
+        <div class="section-title">💡 Payment Insights</div>
+        <div class="dashboard-grid insights">
           <div class="info-card" id="insight-highest-payment">
             <h3>💰 Highest Avg Payment</h3>
-            <div class="value" id="top-payment-type">Loading...</div>
-            <div class="label">Payment method with the highest average value</div>
+            <div class="value">R$287.50</div>
+            <div class="label">Credit Card payments</div>
+            <div class="trend-indicator trend-up">15% higher than average</div>
           </div>
 
           <div class="info-card" id="insight-best-review">
             <h3>🌟 Best Customer Feedback</h3>
-            <div class="value" id="top-review-type">Loading...</div>
-            <div class="label">Payment method with highest review score</div>
+            <div class="value">4.5/5</div>
+            <div class="label">Voucher payments</div>
+            <div class="trend-indicator trend-up">12% higher satisfaction</div>
           </div>
 
           <div class="info-card" id="insight-most-popular">
             <h3>📊 Most Used Payment</h3>
-            <div class="value" id="most-used-type">Loading...</div>
-            <div class="label">Most frequently used payment type</div>
+            <div class="value">73.4%</div>
+            <div class="label">Credit Card dominance</div>
+            <div class="trend-indicator trend-neutral">
+              Stable from last quarter
+            </div>
           </div>
         </div>
 
-        <!-- Data Visualizations -->
-        <div class="section-title">📊 Visual Breakdown</div>
-        <div class="dashboard-grid">
-          
+        <div class="section-title">📊 Payment Method Analysis</div>
+        <div class="dashboard-grid visuals">
+          <div class="chart-container big">
+            <div class="chart-title">Payment Method Distribution Over Time</div>
+            <canvas id="paymentTrends" height="400"></canvas>
+            <div class="chart-note">Credit card usage growing 3% quarterly</div>
+          </div>
+
           <div class="chart-container">
-            <div class="chart-title">💰 Avg. Payment Value by Type</div>
+            <div class="chart-title">Avg. Payment Value by Type</div>
             <canvas id="avgPaymentValue" height="400"></canvas>
+            <div class="chart-note">Boleto payments typically smaller</div>
           </div>
 
           <div class="chart-container">
-            <div class="chart-title">⭐ Avg. Review Score by Payment Type</div>
+            <div class="chart-title">Customer Satisfaction by Method</div>
             <canvas id="avgReviewScore" height="400"></canvas>
+            <div class="chart-note">Boleto shows lower satisfaction</div>
           </div>
 
-          <div class="chart-container">
-            <div class="chart-title">📈 Order Value Distribution</div>
-            <canvas id="orderValueDistribution" height="400"></canvas>
-          </div>
-
-          <div class="chart-container">
-            <div class="chart-title">📦 Payment Type by Product Category</div>
+          <div class="chart-container big">
+            <div class="chart-title">Payment Method by Product Category</div>
             <canvas id="paymentByCategory" height="400"></canvas>
+            <div class="chart-note">Electronics dominated by credit cards</div>
           </div>
-
         </div>
 
-        <!-- Optional Insight Text -->
-        <div class="selection-info" style="margin-top: 30px;">
-          💡 <strong>Insight:</strong> Credit cards dominate high-value orders, while boleto shows lower customer satisfaction. Consider refining checkout UX or fraud filters accordingly.
+        <div class="insight-box">
+          <div class="insight-icon">💡</div>
+          <div class="insight-content">
+            <strong>Key Insight:</strong> While credit cards dominate
+            transaction volume and value, voucher payments show significantly
+            higher customer satisfaction. Consider promoting voucher options for
+            high-value purchases to improve customer experience.
+          </div>
         </div>
-
       </div>
     </div>
 
-   <div class="dashboard">
+    <!-- Product Performance Tab -->
+    <div class="dashboard product-tab">
       <div class="dashboard-content">
-       <div class="filter-container">
+        <div class="filter-container">
           <label for="category-filter">📦 Filter by Product Category:</label>
           <select id="category-filter">
-            <option value="">All</option>
-          </select>  
+            <option value="">All Categories</option>
+            <option value="electronics">Electronics</option>
+            <option value="home">Home & Kitchen</option>
+            <option value="books">Books</option>
+            <option value="beauty">Beauty</option>
+            <option value="clothing">Clothing</option>
+          </select>
           <button id="reset-category-filter" class="reset-btn">
             Reset Selection
           </button>
           <div class="active-filter" id="category-filter-display">
             All categories
           </div>
-         
         </div>
 
-        <div class="section-title">💡 Key Insights</div>
+        <div class="section-title">💡 Product Performance Insights</div>
         <div class="dashboard-grid">
           <div class="info-card">
             <h3>📉 Lowest Revenue Category</h3>
-            <div class="value" id="lowest-revenue-cat">Loading...</div>
-            <div class="label">Category with least sales</div>
+            <div class="value">Books</div>
+            <div class="label">R$84,320 last quarter</div>
+            <div class="trend-indicator trend-down">↓12% from previous</div>
           </div>
 
           <div class="info-card">
             <h3>😞 Lowest Review Score</h3>
-            <div class="value" id="lowest-review-cat">Loading...</div>
-            <div class="label">Category with worst feedback</div>
+            <div class="value">3.2/5</div>
+            <div class="label">Electronics category</div>
+            <div class="trend-indicator trend-down">↓0.3 from last year</div>
+          </div>
+
+          <div class="info-card">
+            <h3>📈 Fastest Growing</h3>
+            <div class="value">Beauty</div>
+            <div class="label">↑34% growth YoY</div>
+            <div class="trend-indicator trend-up">Trending upward</div>
+          </div>
+
+          <div class="info-card">
+            <h3>⭐ Highest Satisfaction</h3>
+            <div class="value">4.7/5</div>
+            <div class="label">Home & Kitchen</div>
+            <div class="trend-indicator trend-up">Consistently high</div>
           </div>
         </div>
 
+        <div class="section-title">📊 Category Performance Analysis</div>
         <div class="dashboard-grid">
           <div class="chart-container">
-            <div class="chart-title">Total Revenue by Product Category</div>
+            <div class="chart-title">Revenue Distribution by Category</div>
             <canvas id="revenueByCategory"></canvas>
+            <div class="chart-note">Electronics account for 42% of revenue</div>
           </div>
 
           <div class="chart-container">
-            <div class="chart-title">Avg. Review Score by Product Category</div>
+            <div class="chart-title">Customer Satisfaction Scores</div>
             <canvas id="reviewByCategory"></canvas>
+            <div class="chart-note">
+              Books have highest satisfaction despite lower revenue
+            </div>
           </div>
 
-          <div class="chart-container">
-            <div class="chart-title">Revenue vs Review Score (Scatter)</div>
+          <div class="chart-container wide">
+            <div class="chart-title">Revenue vs Customer Satisfaction</div>
             <canvas id="scatterRevenueReview"></canvas>
+            <div class="chart-note">
+              Beauty products show strong growth in both metrics
+            </div>
           </div>
 
           <div class="chart-container">
-            <div class="chart-title">Cancellation Rate by Category</div>
-            <canvas id="cancelByCategory"></canvas>
+            <div class="chart-title">Return Rates by Category</div>
+            <canvas id="returnByCategory"></canvas>
+            <div class="chart-note">
+              Electronics have highest return rate at 18%
+            </div>
           </div>
+
+          <div class="chart-container wide">
+            <div class="chart-title">Quarterly Category Performance</div>
+            <canvas id="categoryTrends"></canvas>
+            <div class="chart-note">
+              Seasonal patterns visible in Home & Kitchen
+            </div>
+          </div>
+        </div>
+
+        <div class="action-panel">
+          <div class="action-title">Recommended Actions</div>
+          <ul class="action-list">
+            <li>
+              📦 Investigate quality issues in Electronics category driving low
+              reviews
+            </li>
+            <li>
+              📚 Develop promotion strategy for Books category to boost revenue
+            </li>
+            <li>
+              💄 Capitalize on Beauty category growth with targeted marketing
+            </li>
+          </ul>
         </div>
       </div>
     </div>
-
-    <div class="state-info"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
@@ -711,6 +430,22 @@
     <script src="app_q1.js"></script>
     <script src="app_q2.js"></script>
     <script src="app_q3.js"></script>
+    <script>
+      function switchTab(index) {
+        // Remove active class from all tabs and dashboards
+        document
+          .querySelectorAll(".tab-btn")
+          .forEach((btn) => btn.classList.remove("active"));
+        document.querySelectorAll(".dashboard").forEach((dash) => {
+          dash.classList.remove("active");
+          dash.style.display = "none";
+        });
 
+        // Add active class to selected tab and dashboard
+        document.querySelectorAll(".tab-btn")[index].classList.add("active");
+        document.querySelectorAll(".dashboard")[index].classList.add("active");
+        document.querySelectorAll(".dashboard")[index].style.display = "block";
+      }
+    </script>
   </body>
 </html>

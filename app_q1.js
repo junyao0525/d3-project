@@ -1,13 +1,18 @@
-// Main app
-d3.csv("olist_combined_clean_3.csv").then((data) => {
-  document.getElementById("loading").style.display = "none"; // Hide spinner
+// === Main App ===
+document.addEventListener("DOMContentLoaded", () => {
+  d3.csv("olist_combined_clean_3.csv").then((data) => {
+    const loading = document.getElementById("loading");
+    if (loading) loading.style.display = "none";
 
-  preprocess(data);
-  updateStats(data);
-  populateGeoFilter(data);
-  drawCharts(data);
-  drawMap(data); // ✅ map included
-  setupFilterEvents(data);
+    preprocess(data);
+    updateStats(data);
+    updateTrends(data);
+    updateMapInfoPanel(data);
+    populateGeoFilter();
+    drawCharts(data);
+    drawMap(data);
+    setupFilterEvents(data);
+  });
 });
 
 // === STEP 1: Preprocessing ===
@@ -22,6 +27,7 @@ function preprocess(data) {
   });
 }
 
+// === STEP 2: Stats Cards ===
 function updateStats(data) {
   const totalRevenue = d3.sum(data, (d) => d.payment_value);
   const avgReview = d3.mean(data, (d) => d.review_score).toFixed(2);
@@ -40,24 +46,36 @@ function updateStats(data) {
     )
     .toFixed(1);
 
-  document.getElementById(
-    "total-revenue"
-  ).textContent = `R$ ${totalRevenue.toLocaleString("pt-BR", {
-    minimumFractionDigits: 2,
-  })}`;
-  document.getElementById("avg-review").textContent = `${avgReview} ★`;
-  document.getElementById("avg-delivery").textContent = `${avgDelivery} days`;
+  const revenueEl = document.getElementById("total-revenue");
+  const reviewEl = document.getElementById("avg-review");
+  const deliveryEl = document.getElementById("avg-delivery");
+
+  if (revenueEl) {
+    revenueEl.textContent = `R$ ${totalRevenue.toLocaleString("pt-BR", {
+      minimumFractionDigits: 2,
+    })}`;
+  }
+  if (reviewEl) reviewEl.textContent = `${avgReview} ★`;
+  if (deliveryEl) deliveryEl.textContent = `${avgDelivery} days`;
 }
 
 // === STEP 3: Geo Filter Dropdown ===
-function populateGeoFilter(data) {
-  const states = Array.from(new Set(data.map((d) => d.customer_state))).sort();
-  const select = document.getElementById("geo-filter");
-  states.forEach((state) => {
+function populateGeoFilter() {
+  const geoFilter = document.getElementById("geo-filter");
+  if (!geoFilter) return;
+
+  geoFilter.innerHTML = "";
+
+  const allOpt = document.createElement("option");
+  allOpt.value = "";
+  allOpt.textContent = "All States";
+  geoFilter.appendChild(allOpt);
+
+  Object.entries(stateNameToAbbr).forEach(([name, abbr]) => {
     const opt = document.createElement("option");
-    opt.value = state;
-    opt.textContent = state;
-    select.appendChild(opt);
+    opt.value = abbr;
+    opt.textContent = name;
+    geoFilter.appendChild(opt);
   });
 }
 
@@ -123,19 +141,47 @@ function drawCharts(data) {
     "Avg Freight (R$)",
     "#10b981"
   );
+
+  // Update chart note for top 5 revenue
+  const total = d3.sum(revenue);
+  const top5Total = revenue
+    .slice()
+    .sort((a, b) => b - a)
+    .slice(0, 5)
+    .reduce((a, b) => a + b, 0);
+  const note = document
+    .querySelector("#revenueByState")
+    ?.parentElement?.querySelector(".chart-note");
+  if (note) {
+    note.textContent = `Top 5 states account for ${(
+      (top5Total / total) *
+      100
+    ).toFixed(1)}% of total revenue`;
+  }
 }
 
 function drawBarChart(canvasId, labels, values, label, color) {
-  const ctx = document.getElementById(canvasId).getContext("2d");
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) {
+    console.warn(`Canvas not found: #${canvasId}`);
+    return;
+  }
+
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    console.warn(`Failed to get context for: #${canvasId}`);
+    return;
+  }
+
   if (charts[canvasId]) charts[canvasId].destroy();
 
   return new Chart(ctx, {
     type: "bar",
     data: {
-      labels: labels,
+      labels,
       datasets: [
         {
-          label: label,
+          label,
           data: values,
           backgroundColor: color,
         },
@@ -159,7 +205,6 @@ function drawBarChart(canvasId, labels, values, label, color) {
           beginAtZero: true,
           ticks: {
             callback: (v) => `R$ ${v / 1000}k`,
-            maxTicksLimit: 10,
           },
         },
       },
@@ -169,7 +214,13 @@ function drawBarChart(canvasId, labels, values, label, color) {
 
 // === STEP 5: Filters ===
 function setupFilterEvents(data) {
-  document.getElementById("geo-filter").addEventListener("change", function () {
+  const filterEl = document.getElementById("geo-filter");
+  const displayEl = document.getElementById("active-filter-display");
+  const resetBtn = document.getElementById("reset-selection");
+
+  if (!filterEl || !displayEl || !resetBtn) return;
+
+  filterEl.addEventListener("change", function () {
     const selectedState = this.value;
     const filtered = selectedState
       ? data.filter((d) => d.customer_state === selectedState)
@@ -177,19 +228,207 @@ function setupFilterEvents(data) {
 
     updateStats(filtered);
     drawCharts(filtered);
+    updateTrends(filtered);
+    updateMapInfoPanel(filtered);
 
-    document.getElementById("active-filter-display").textContent = selectedState
+    displayEl.textContent = selectedState
       ? `Showing data for: ${selectedState}`
       : "Showing all states";
   });
 
-  document.getElementById("reset-selection").addEventListener("click", () => {
-    document.getElementById("geo-filter").value = "";
-    document.getElementById("geo-filter").dispatchEvent(new Event("change"));
+  resetBtn.addEventListener("click", () => {
+    filterEl.value = "";
+    filterEl.dispatchEvent(new Event("change"));
   });
 }
 
-// === GEO MAP STATE ABBREVIATIONS ===
+// === STEP 6: Trend Function ===
+function updateTrends(data) {
+  const groupedByMonth = d3.groups(data, (d) =>
+    d3.timeMonth(d.order_purchase_timestamp)
+  );
+
+  groupedByMonth.sort((a, b) => new Date(a[0]) - new Date(b[0]));
+
+  // Filter out incomplete months (less than 25 days of data range)
+  const completeMonths = groupedByMonth
+    .map(([month, rows]) => {
+      const dates = rows.map((r) => r.order_purchase_timestamp);
+      const spanDays = (d3.max(dates) - d3.min(dates)) / (1000 * 60 * 60 * 24);
+      return spanDays >= 25 ? [month, rows] : null;
+    })
+    .filter(Boolean);
+
+  if (completeMonths.length < 2) {
+    console.warn("Not enough full months for trend comparison");
+    return;
+  }
+
+  const lastMonth = completeMonths[completeMonths.length - 2][1];
+  const thisMonth = completeMonths[completeMonths.length - 1][1];
+
+  const sumPayment = (d) => d3.sum(d, (row) => row.payment_value);
+  const avgReview = (d) => d3.mean(d, (row) => row.review_score);
+  const avgDelivery = (d) =>
+    d3.mean(
+      d
+        .filter(
+          (r) =>
+            r.order_delivered_customer_date &&
+            r.order_purchase_timestamp &&
+            !isNaN(r.order_delivered_customer_date - r.order_purchase_timestamp)
+        )
+        .map(
+          (r) =>
+            (r.order_delivered_customer_date - r.order_purchase_timestamp) /
+            (1000 * 60 * 60 * 24)
+        )
+    );
+
+  const lastRevenue = sumPayment(lastMonth);
+  const thisRevenue = sumPayment(thisMonth);
+  const lastReview = avgReview(lastMonth);
+  const thisReview = avgReview(thisMonth);
+  const lastDelivery = avgDelivery(lastMonth);
+  const thisDelivery = avgDelivery(thisMonth);
+
+  const revenueDelta = thisRevenue - lastRevenue;
+  const reviewDelta = thisReview - lastReview;
+  const deliveryDelta =
+    !isNaN(thisDelivery) && !isNaN(lastDelivery)
+      ? thisDelivery - lastDelivery
+      : NaN;
+
+  const revChange =
+    !isNaN(lastRevenue) && lastRevenue !== 0
+      ? (revenueDelta / lastRevenue) * 100
+      : 0;
+
+  const revenueLabel = document
+    .querySelector("#total-revenue")
+    ?.parentElement?.querySelector(".label");
+  const reviewLabel = document
+    .querySelector("#avg-review")
+    ?.parentElement?.querySelector(".label");
+  const deliveryLabel = document
+    .querySelector("#avg-delivery")
+    ?.parentElement?.querySelector(".label");
+
+  if (revenueLabel && !isNaN(revChange)) {
+    revenueLabel.innerHTML = `Across all states | <span class="${
+      revChange > 0
+        ? "trend-up"
+        : revChange < 0
+        ? "trend-down"
+        : "trend-neutral"
+    }">${revChange > 0 ? "↑" : revChange < 0 ? "↓" : "–"}${Math.abs(
+      revChange
+    ).toFixed(1)}%</span> from last month`;
+  }
+
+  if (reviewLabel && !isNaN(reviewDelta)) {
+    reviewLabel.innerHTML = `Average review score | <span class="${
+      reviewDelta > 0
+        ? "trend-up"
+        : reviewDelta < 0
+        ? "trend-down"
+        : "trend-neutral"
+    }">${reviewDelta > 0 ? "↑" : reviewDelta < 0 ? "↓" : "–"}${Math.abs(
+      reviewDelta
+    ).toFixed(1)}</span> from last month`;
+  }
+
+  if (deliveryLabel) {
+    if (!isNaN(deliveryDelta)) {
+      deliveryLabel.innerHTML = `Nationwide average | <span class="${
+        deliveryDelta < 0
+          ? "trend-up"
+          : deliveryDelta > 0
+          ? "trend-down"
+          : "trend-neutral"
+      }">${deliveryDelta < 0 ? "↓" : deliveryDelta > 0 ? "↑" : "–"}${Math.abs(
+        deliveryDelta
+      ).toFixed(1)} days</span> ${
+        deliveryDelta < 0
+          ? "improvement"
+          : deliveryDelta > 0
+          ? "longer"
+          : "unchanged"
+      }`;
+    } else {
+      deliveryLabel.innerHTML =
+        'Nationwide average | <span class="trend-neutral">–</span> No data';
+    }
+  }
+
+  console.log("📈 Revenue Delta:", revenueDelta);
+  console.log("🌟 Review Delta:", reviewDelta);
+  console.log("🚚 Delivery Delta:", deliveryDelta);
+}
+// === STEP 7: Map Info Panel ===
+function updateMapInfoPanel(data) {
+  const grouped = d3.rollups(
+    data,
+    (v) => ({
+      revenue: d3.sum(v, (d) => d.payment_value),
+      delivery: d3.mean(
+        v
+          .filter(
+            (d) =>
+              !isNaN(
+                d.order_delivered_customer_date - d.order_purchase_timestamp
+              )
+          )
+          .map(
+            (d) =>
+              (d.order_delivered_customer_date - d.order_purchase_timestamp) /
+              (1000 * 60 * 60 * 24)
+          )
+      ),
+      review: d3.mean(v, (d) => d.review_score),
+    }),
+    (d) => d.customer_state
+  );
+
+  const topRevenue = grouped.reduce((a, b) =>
+    a[1].revenue > b[1].revenue ? a : b
+  );
+  const topDelivery = grouped.reduce((a, b) =>
+    a[1].delivery < b[1].delivery ? a : b
+  );
+  const topReview = grouped.reduce((a, b) =>
+    a[1].review > b[1].review ? a : b
+  );
+
+  const panel = document.querySelector(".map-info-panel");
+  if (panel) {
+    panel.innerHTML = `
+    <div class="map-title">Regional Performance Summary</div>
+    <div class="map-stats">
+      <div class="stat-item">
+        <div class="stat-label">Top Performing State</div>
+        <div class="stat-value">${stateFullName(topRevenue[0])}</div>
+        <div class="stat-detail">R$ ${topRevenue[1].revenue.toLocaleString(
+          "pt-BR"
+        )}</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">Fastest Delivery</div>
+        <div class="stat-value">${stateFullName(topDelivery[0])}</div>
+        <div class="stat-detail">${topDelivery[1].delivery.toFixed(
+          1
+        )} days avg</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">Highest Satisfaction</div>
+        <div class="stat-value">${stateFullName(topReview[0])}</div>
+        <div class="stat-detail">${topReview[1].review.toFixed(1)} ★</div>
+      </div>
+    </div>`;
+  }
+}
+
+// === STEP 8: Abbreviation Mapping (already used in other places) ===
 const stateNameToAbbr = {
   Acre: "AC",
   Alagoas: "AL",
@@ -220,7 +459,17 @@ const stateNameToAbbr = {
   Tocantins: "TO",
 };
 
-// === DRAW MAP ===
+const abbrToStateName = Object.entries(stateNameToAbbr).reduce(
+  (acc, [name, abbr]) => {
+    acc[abbr] = name;
+    return acc;
+  },
+  {}
+);
+
+function stateFullName(code) {
+  return `${abbrToStateName[code] || code} (${code})`;
+}
 let selectedState = null; // Track selected state
 
 function drawMap(data) {
