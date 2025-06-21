@@ -136,7 +136,7 @@ function drawCharts(data) {
     labels,
     delivery,
     "Avg Delivery Time (days)",
-    "#38bdf8",
+    "#0ea5e9",
     `Fastest avg delivery: ${Math.min(...delivery).toFixed(1)} days`
   );
 
@@ -145,7 +145,7 @@ function drawCharts(data) {
     labels,
     review,
     "Avg Review Score",
-    "#f59e0b",
+    "#0ea5e9",
     `Highest satisfaction: ${Math.max(...review).toFixed(1)} ★`
   );
 
@@ -154,7 +154,7 @@ function drawCharts(data) {
     labels,
     freight,
     "Avg Freight (R$)",
-    "#10b981",
+    "#0ea5e9",
     `Freight range: R$ ${Math.min(...freight).toFixed(2)} – R$ ${Math.max(
       ...freight
     ).toFixed(2)}`
@@ -482,7 +482,7 @@ let selectedState = null; // Track selected state
 function drawMap(data) {
   console.log("🔍 Starting drawMap");
 
-  const width = 800;
+  const width = 600;
   const height = 400; // Map height
   const legendHeight = 60; // Space for legend
   const totalHeight = height + legendHeight; // Total SVG height

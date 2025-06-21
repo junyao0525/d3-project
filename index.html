@@ -109,8 +109,51 @@
     <div class="main-container">
       <!-- Sidebar -->
       <div class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-          <h3>Filters</h3>
+        <!-- Geographic Summary Cards -->
+        <div class="summary-section" id="geo-summary">
+          <h4>Key Metrics</h4>
+          <div class="summary-grid">
+            <div class="summary-card">
+              <div class="summary-value" id="total-revenue">Loading</div>
+              <div class="summary-label">Total Revenue</div>
+            </div>
+
+            <div class="summary-card">
+              <div class="summary-value" id="avg-delivery">Loading</div>
+              <div class="summary-label">Avg. Delivery Time</div>
+            </div>
+
+            <div class="summary-card">
+              <div class="summary-value" id="avg-review">Loading</div>
+              <div class="summary-label">Customer Satisfaction</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Product Summary Cards -->
+        <div class="summary-section" id="product-summary" style="display: none">
+          <h4>Product Insights</h4>
+          <div class="summary-grid">
+            <div class="summary-card" id="lowest-revenue-card">
+              <div class="summary-value">loading...</div>
+              <div class="summary-label">Lowest Revenue Category</div>
+            </div>
+
+            <div class="summary-card" id="lowest-review-card">
+              <div class="summary-value">loading...</div>
+              <div class="summary-label">Lowest Review Score</div>
+            </div>
+
+            <div class="summary-card" id="fastest-growth-card">
+              <div class="summary-value">loading...</div>
+              <div class="summary-label">Fastest Growing</div>
+            </div>
+
+            <div class="summary-card" id="highest-satisfaction-card">
+              <div class="summary-value">loading...</div>
+              <div class="summary-label">Highest Satisfaction</div>
+            </div>
+          </div>
         </div>
 
         <!-- Geographic Filters -->
@@ -157,75 +200,39 @@
       <div class="content-area">
         <div class="dashboard active geographic-tab">
           <div class="dashboard-content">
-            <div class="dashboard-grid">
-              <div class="info-card">
-                <div class="value" id="total-revenue">Loading</div>
-                <div class="h3">Total Revenue</div>
-              </div>
-
-              <div class="info-card">
-                <div class="value" id="avg-delivery">Loading</div>
-                <div class="h3">Avg. Delivery Time</div>
-              </div>
-
-              <div class="info-card">
-                <div class="value" id="avg-review">Loading</div>
-                <div class="h3">Customer Satisfaction</div>
-              </div>
-            </div>
-            <div class="map-container">
-              <div class="map-title">Total Revenue by Brazilian State</div>
-              <div class="map-box">
-                <div id="brazil-map">
-                  <svg class="map-svg" style="background-color: #f9f9f9"></svg>
-                </div>
-                <div class="map-info-panel">
-                  <div class="map-title">Regional Performance Summary</div>
-                  <div class="map-stats">
-                    <div class="stat-item">
-                      <div class="stat-label">Top Performing State</div>
-                      <div class="stat-value">Loading...</div>
-                      <div class="stat-detail">Loading...</div>
-                    </div>
-                    <div class="stat-item">
-                      <div class="stat-label">Fastest Delivery</div>
-                      <div class="stat-value">Loading...</div>
-                      <div class="stat-detail">Loading...</div>
-                    </div>
-                    <div class="stat-item">
-                      <div class="stat-label">Highest Satisfaction</div>
-                      <div class="stat-value">Loading...</div>
-                      <div class="stat-detail">Loading...</div>
-                    </div>
+            <div class="geographic-layout">
+              <div class="map-container">
+                <div class="map-title">Total Revenue by Brazilian State</div>
+                <div class="map-box">
+                  <div id="brazil-map">
+                    <svg
+                      class="map-svg"
+                      style="background-color: #f9f9f9"
+                    ></svg>
                   </div>
                 </div>
+                <div id="selected-state-info"></div>
               </div>
-              <div id="selected-state-info"></div>
-            </div>
-          </div>
-          <div class="dashboard-grid-2">
-            <div class="chart-container">
-              <div class="chart-title">Revenue Distribution by State</div>
-              <canvas id="revenueByState" height="400"></canvas>
-              <div class="chart-note">Loading ...</div>
-            </div>
 
-            <div class="chart-container">
-              <div class="chart-title">Delivery Efficiency</div>
-              <canvas id="deliveryTimeByState" height="400"></canvas>
-              <div class="chart-note">Loading ...</div>
-            </div>
+              <div class="charts-column">
+                <div class="chart-container">
+                  <div class="chart-title">Delivery Efficiency</div>
+                  <canvas id="deliveryTimeByState" height="400"></canvas>
+                  <div class="chart-note">Loading ...</div>
+                </div>
 
-            <div class="chart-container">
-              <div class="chart-title">Customer Satisfaction Scores</div>
-              <canvas id="reviewScoreByState" height="400"></canvas>
-              <div class="chart-note">Loading ...</div>
-            </div>
+                <div class="chart-container">
+                  <div class="chart-title">Customer Satisfaction Scores</div>
+                  <canvas id="reviewScoreByState" height="400"></canvas>
+                  <div class="chart-note">Loading ...</div>
+                </div>
 
-            <div class="chart-container">
-              <div class="chart-title">Freight Cost vs Revenue</div>
-              <canvas id="freightVsRevenue" height="400"></canvas>
-              <div class="chart-note">Loading ...</div>
+                <div class="chart-container">
+                  <div class="chart-title">Freight Cost vs Revenue</div>
+                  <canvas id="freightVsRevenue" height="400"></canvas>
+                  <div class="chart-note">Loading ...</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -233,27 +240,6 @@
         <!-- Product Performance Tab -->
         <div class="dashboard product-tab">
           <div class="dashboard-content">
-            <div class="dashboard-grid">
-              <div class="info-card" id="lowest-revenue-card">
-                <div class="value">loading...</div>
-                <div class="h3">Lowest Revenue Category</div>
-              </div>
-
-              <div class="info-card" id="lowest-review-card">
-                <div class="value">loading...</div>
-                <div class="h3">Lowest Review Score</div>
-              </div>
-
-              <div class="info-card" id="fastest-growth-card">
-                <div class="value">loading...</div>
-                <div class="h3">Fastest Growing</div>
-              </div>
-
-              <div class="info-card" id="highest-satisfaction-card">
-                <div class="value">loading...</div>
-                <div class="h3">Highest Satisfaction</div>
-              </div>
-            </div>
             <div class="dashboard-grid">
               <div class="chart-container">
                 <div class="chart-title">Revenue Distribution by Category</div>
@@ -305,13 +291,17 @@
         document.querySelectorAll(".dashboard")[index].classList.add("active");
         document.querySelectorAll(".dashboard")[index].style.display = "block";
 
-        // Show/hide appropriate filters
+        // Show/hide appropriate filters and summaries
         if (index === 0) {
           document.getElementById("geo-filters").style.display = "block";
           document.getElementById("product-filters").style.display = "none";
+          document.getElementById("geo-summary").style.display = "block";
+          document.getElementById("product-summary").style.display = "none";
         } else {
           document.getElementById("geo-filters").style.display = "none";
           document.getElementById("product-filters").style.display = "block";
+          document.getElementById("geo-summary").style.display = "none";
+          document.getElementById("product-summary").style.display = "block";
         }
       }
     </script>

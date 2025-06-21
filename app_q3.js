@@ -275,12 +275,7 @@ function showCategoryInsights(data) {
 
   const card0 = document.getElementById("lowest-revenue-card");
   if (card0) {
-    card0.querySelector(".value").textContent = lowestRevenue[0];
-    const trend0 = card0.querySelector(".trend-indicator");
-    if (trend0) {
-      trend0.textContent = "↓12% from previous";
-      trend0.className = "trend-indicator trend-down";
-    }
+    card0.querySelector(".summary-value").textContent = lowestRevenue[0];
   }
 
   // === Lowest Review Score ===
@@ -292,13 +287,8 @@ function showCategoryInsights(data) {
   const card1 = document.getElementById("lowest-review-card");
   if (card1) {
     card1.querySelector(
-      ".value"
+      ".summary-value"
     ).textContent = `${lowestReview[1].avgReview.toFixed(1)}/5`;
-    const trend1 = card1.querySelector(".trend-indicator");
-    if (trend1) {
-      trend1.textContent = "↓0.3 from last year";
-      trend1.className = "trend-indicator trend-down";
-    }
   }
 
   // === Fastest Growing ===
@@ -313,12 +303,7 @@ function showCategoryInsights(data) {
 
   const card2 = document.getElementById("fastest-growth-card");
   if (card2) {
-    card2.querySelector(".value").textContent = fastestGrowing[0];
-    const trend2 = card2.querySelector(".trend-indicator");
-    if (trend2) {
-      trend2.textContent = "Trending upward";
-      trend2.className = "trend-indicator trend-up";
-    }
+    card2.querySelector(".summary-value").textContent = fastestGrowing[0];
   }
 
   // === Highest Satisfaction ===
@@ -330,13 +315,8 @@ function showCategoryInsights(data) {
   const card3 = document.getElementById("highest-satisfaction-card");
   if (card3) {
     card3.querySelector(
-      ".value"
+      ".summary-value"
     ).textContent = `${highestReview[1].avgReview.toFixed(1)}/5`;
-    const trend3 = card3.querySelector(".trend-indicator");
-    if (trend3) {
-      trend3.textContent = "Consistently high";
-      trend3.className = "trend-indicator trend-up";
-    }
   }
 
   console.log("✅ showCategoryInsights completed successfully");
