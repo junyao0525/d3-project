@@ -247,7 +247,7 @@ input:checked + .slider:before {
 .map-container {
   background: #ffffff;
   border: 2px solid #e9ecef;
-  border-radius: 8px;
+  border-radius: 0;
   padding: 15px;
   position: relative;
   overflow: hidden;
@@ -368,7 +368,7 @@ canvas {
 }
 
 #brazil-map {
-  height: 420px;
+  height: 450px;
   width: 50%;
 }
 
@@ -459,11 +459,10 @@ canvas {
 
 .dashboard-grid {
   display: flex;
-  gap: 0;
+  gap: 0px;
   margin-bottom: 0px;
   justify-content: center;
   flex-wrap: nowrap;
-  overflow-x: auto;
   border: 2px solid #e9ecef;
   border-radius: 8px;
   overflow: hidden;
@@ -472,13 +471,10 @@ canvas {
 .dashboard-grid-2 {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 0;
+  gap: 0px;
   margin-bottom: 0px;
-  max-width: 1200px;
-  margin-left: auto;
-  margin-right: auto;
   border: 2px solid #e9ecef;
-  border-radius: 8px;
+  border-radius: 0 0 8px 8px;
   overflow: hidden;
 }
 
@@ -498,12 +494,12 @@ canvas {
 
 .info-card:first-child {
   border-top-left-radius: 8px;
-  border-bottom-left-radius: 8px;
+  border-bottom-left-radius: 0px;
 }
 
 .info-card:last-child {
   border-top-right-radius: 8px;
-  border-bottom-right-radius: 8px;
+  border-bottom-right-radius: 0px;
 }
 
 .info-card:not(:last-child) {
@@ -798,7 +794,7 @@ canvas {
 .product-tab .dashboard-grid:not(:first-child) {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
+  gap: 0;
   margin-bottom: 20px;
   border: 2px solid #e9ecef;
   border-radius: 8px;
@@ -806,36 +802,19 @@ canvas {
 }
 
 .product-tab .dashboard-grid:not(:first-child) .chart-container {
+  border: none;
   border-radius: 0;
   margin-bottom: 0;
+  border-right: 1px solid #e9ecef;
+  border-bottom: 1px solid #e9ecef;
 }
 
-.product-tab .dashboard-grid:not(:first-child) .chart-container:first-child {
-  border-top-left-radius: 8px;
-  border-bottom-left-radius: 8px;
-}
-
-.product-tab .dashboard-grid:not(:first-child) .chart-container:nth-child(2) {
-  border-top-right-radius: 8px;
-  border-bottom-right-radius: 8px;
-}
-
-.product-tab .dashboard-grid:not(:first-child) .chart-container:nth-child(3) {
-  border-bottom-left-radius: 8px;
-}
-
-.product-tab .dashboard-grid:not(:first-child) .chart-container:nth-child(4) {
-  border-bottom-right-radius: 8px;
+.product-tab .dashboard-grid:not(:first-child) .chart-container:nth-child(2n) {
+  border-right: none;
 }
 
 .product-tab
   .dashboard-grid:not(:first-child)
-  .chart-container:not(:nth-child(2n)) {
-  border-right: 2px solid #dee2e6;
-}
-
-.product-tab
-  .dashboard-grid:not(:first-child)
-  .chart-container:nth-child(-n + 2) {
-  border-bottom: 2px solid #dee2e6;
+  .chart-container:nth-child(n + 3) {
+  border-bottom: none;
 }
