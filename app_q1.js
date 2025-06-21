@@ -149,15 +149,12 @@ function drawCharts(data) {
     `Highest satisfaction: ${Math.max(...review).toFixed(1)} ★`
   );
 
-  charts.freightVsRevenue = drawBarChart(
+  charts.freightVsRevenue = drawScatterChart(
     "freightVsRevenue",
-    labels,
-    freight,
-    "Avg Freight (R$)",
+    stateAgg.map((d) => ({ x: d[1].freight, y: d[1].revenue, label: d[0] })),
+    "Freight Cost vs Revenue",
     "#0ea5e9",
-    `Freight range: R$ ${Math.min(...freight).toFixed(2)} – R$ ${Math.max(
-      ...freight
-    ).toFixed(2)}`
+    `Correlation between freight costs and revenue by state`
   );
 }
 
@@ -196,6 +193,7 @@ function drawBarChart(canvasId, labels, values, label, color, noteText = null) {
     },
     options: {
       responsive: true,
+      maintainAspectRatio: false,
       plugins: {
         legend: { display: false },
         tooltip: {
@@ -207,11 +205,141 @@ function drawBarChart(canvasId, labels, values, label, color, noteText = null) {
           },
         },
       },
+      layout: {
+        padding: {
+          left: 10,
+          right: 10,
+          top: 10,
+          bottom: 10,
+        },
+      },
       scales: {
+        x: {
+          ticks: {
+            maxRotation: 45,
+            minRotation: 0,
+            font: {
+              size: 10,
+            },
+          },
+          grid: {
+            display: false,
+          },
+        },
         y: {
           beginAtZero: true,
           ticks: {
             callback: (v) => `R$ ${v / 1000}k`,
+            font: {
+              size: 10,
+            },
+            padding: 5,
+          },
+          grid: {
+            color: "#f0f0f0",
+          },
+        },
+      },
+    },
+  });
+}
+
+function drawScatterChart(canvasId, dataPoints, label, color, noteText = null) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) {
+    console.warn(`Canvas not found: #${canvasId}`);
+    return;
+  }
+
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    console.warn(`Failed to get context for: #${canvasId}`);
+    return;
+  }
+
+  if (charts[canvasId]) charts[canvasId].destroy();
+
+  // Set chart note if provided
+  const note = canvas.parentElement?.querySelector(".chart-note");
+  if (note && noteText) {
+    note.textContent = noteText;
+  }
+
+  return new Chart(ctx, {
+    type: "scatter",
+    data: {
+      datasets: [
+        {
+          label,
+          data: dataPoints,
+          backgroundColor: color,
+          pointRadius: 6,
+          pointHoverRadius: 8,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: (items) => items[0].raw.label,
+            label: (ctx) => [
+              `Freight: R$ ${ctx.parsed.x.toLocaleString("pt-BR", {
+                minimumFractionDigits: 2,
+              })}`,
+              `Revenue: R$ ${ctx.parsed.y.toLocaleString("pt-BR", {
+                minimumFractionDigits: 2,
+              })}`,
+            ],
+          },
+        },
+      },
+      layout: {
+        padding: {
+          left: 10,
+          right: 10,
+          top: 10,
+          bottom: 10,
+        },
+      },
+      scales: {
+        x: {
+          title: {
+            display: true,
+            text: "Average Freight Cost (R$)",
+            font: {
+              size: 12,
+            },
+          },
+          ticks: {
+            font: {
+              size: 10,
+            },
+            callback: (v) => `R$ ${v.toLocaleString("pt-BR")}`,
+          },
+          grid: {
+            color: "#f0f0f0",
+          },
+        },
+        y: {
+          title: {
+            display: true,
+            text: "Total Revenue (R$)",
+            font: {
+              size: 12,
+            },
+          },
+          ticks: {
+            font: {
+              size: 10,
+            },
+            callback: (v) => `R$ ${(v / 1000).toFixed(0)}k`,
+          },
+          grid: {
+            color: "#f0f0f0",
           },
         },
       },
