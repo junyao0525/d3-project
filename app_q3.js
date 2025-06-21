@@ -1,5 +1,9 @@
 // Fixed version of your JavaScript functions
 
+// Global variables for highlighting functionality
+let selectedCategory = null;
+let originalChartData = {};
+
 d3.csv("olist_combined_clean_3.csv").then((data) => {
   preprocess(data);
   drawCategoryAnalysis(data);
@@ -34,6 +38,10 @@ function drawCategoryAnalysis(data) {
       : data;
     document.getElementById("category-filter-display").textContent =
       val || "All categories";
+    
+    // Clear highlighting when filter changes
+    selectedCategory = null;
+    
     drawCategoryCharts(filtered);
     showCategoryInsights(filtered); // ✅ Now passing correct filtered data
   });
@@ -88,10 +96,38 @@ function drawCategoryCharts(data) {
     data: {
       labels: revLabels,
       datasets: [
-        { label: "Revenue (R$)", data: revValues, backgroundColor: "#0ea5e9" },
+        { 
+          label: "Revenue (R$)", 
+          data: revValues, 
+          backgroundColor: revLabels.map(label => getBarColor(label, selectedCategory)),
+          borderColor: revLabels.map(label => getBarColor(label, selectedCategory)),
+          borderWidth: 1
+        },
       ],
     },
-    options: { responsive: true, scales: { y: { beginAtZero: true } } },
+    options: { 
+      responsive: true, 
+      scales: { y: { beginAtZero: true } },
+      onClick: (event, elements) => {
+        if (elements.length > 0) {
+          const clickedIndex = elements[0].index;
+          const clickedCategory = revLabels[clickedIndex];
+          toggleCategorySelection(clickedCategory);
+        }
+      },
+      plugins: {
+        legend: {
+          display: false
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              return `Revenue: R$${context.parsed.y.toFixed(2)}`;
+            }
+          }
+        }
+      }
+    },
   });
   document
     .querySelector("#revenueByCategory")
@@ -115,13 +151,34 @@ function drawCategoryCharts(data) {
         {
           label: "Avg Review Score",
           data: reviewValues,
-          backgroundColor: "#f59e0b",
+          backgroundColor: reviewLabels.map(label => getBarColor(label, selectedCategory)),
+          borderColor: reviewLabels.map(label => getBarColor(label, selectedCategory)),
+          borderWidth: 1
         },
       ],
     },
     options: {
       responsive: true,
       scales: { y: { beginAtZero: true, max: 5 } },
+      onClick: (event, elements) => {
+        if (elements.length > 0) {
+          const clickedIndex = elements[0].index;
+          const clickedCategory = reviewLabels[clickedIndex];
+          toggleCategorySelection(clickedCategory);
+        }
+      },
+      plugins: {
+        legend: {
+          display: false
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              return `Avg Review: ${context.parsed.y.toFixed(2)}/5`;
+            }
+          }
+        }
+      }
     },
   });
   document
@@ -149,13 +206,27 @@ function drawCategoryCharts(data) {
         {
           label: "Categories",
           data: scatterData,
-          backgroundColor: "#6366f1",
+          backgroundColor: scatterData.map(point => getPointColor(point.label, selectedCategory)),
+          borderColor: scatterData.map(point => getPointColor(point.label, selectedCategory)),
+          borderWidth: 1,
+          pointRadius: 6,
+          pointHoverRadius: 8
         },
       ],
     },
     options: {
       responsive: true,
+      onClick: (event, elements) => {
+        if (elements.length > 0) {
+          const clickedIndex = elements[0].index;
+          const clickedCategory = scatterData[clickedIndex].label;
+          toggleCategorySelection(clickedCategory);
+        }
+      },
       plugins: {
+        legend: {
+          display: false
+        },
         tooltip: {
           callbacks: {
             label: (ctx) =>
@@ -206,13 +277,34 @@ function drawCategoryCharts(data) {
         {
           label: "Cancellation Rate (%)",
           data: cancelRates,
-          backgroundColor: "#ef4444",
+          backgroundColor: cancelLabels.map(label => getBarColor(label, selectedCategory)),
+          borderColor: cancelLabels.map(label => getBarColor(label, selectedCategory)),
+          borderWidth: 1
         },
       ],
     },
     options: {
       responsive: true,
       scales: { y: { beginAtZero: true, max: 100 } },
+      onClick: (event, elements) => {
+        if (elements.length > 0) {
+          const clickedIndex = elements[0].index;
+          const clickedCategory = cancelLabels[clickedIndex];
+          toggleCategorySelection(clickedCategory);
+        }
+      },
+      plugins: {
+        legend: {
+          display: false
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              return `Cancellation Rate: ${context.parsed.y}%`;
+            }
+          }
+        }
+      }
     },
   });
   document
@@ -222,6 +314,97 @@ function drawCategoryCharts(data) {
   } has the highest return rate at ${(
     worstCancelCat[1].cancelRate * 100
   ).toFixed(1)}%`;
+
+  // Store original data for highlighting
+  originalChartData = {
+    revLabels, revValues, reviewLabels, reviewValues, 
+    scatterData, cancelLabels, cancelRates
+  };
+}
+
+// Helper function to get color based on selection state
+function getBarColor(category, selectedCategory) {
+  const baseColor = "#f59e0b";
+  const baseColorTransparent = "rgba(245, 158, 11, 0.3)";
+
+  if (!selectedCategory || category === selectedCategory) {
+    return baseColor;
+  } else {
+    return baseColorTransparent;
+  }
+}
+
+// Helper function to get point color for scatter plot
+function getPointColor(category, selectedCategory) {
+  const baseColor = "#f59e0b";
+  const baseColorTransparent = "rgba(245, 158, 11, 0.3)";
+  
+  if (!selectedCategory || category === selectedCategory) {
+    return baseColor;
+  } else {
+    return baseColorTransparent;
+  }
+}
+
+// Function to toggle category selection
+function toggleCategorySelection(category) {
+  if (selectedCategory === category) {
+    // If clicking the same category, deselect it
+    selectedCategory = null;
+  } else {
+    // Select the new category
+    selectedCategory = category;
+  }
+  
+  // Update all charts with new highlighting
+  updateChartHighlighting();
+}
+
+// Function to update highlighting across all charts
+function updateChartHighlighting() {
+  // Update Chart 1 (Revenue)
+  if (window.catChart1 && originalChartData.revLabels) {
+    window.catChart1.data.datasets[0].backgroundColor = originalChartData.revLabels.map(
+      label => getBarColor(label, selectedCategory)
+    );
+    window.catChart1.data.datasets[0].borderColor = originalChartData.revLabels.map(
+      label => getBarColor(label, selectedCategory)
+    );
+    window.catChart1.update();
+  }
+
+  // Update Chart 2 (Review)
+  if (window.catChart2 && originalChartData.reviewLabels) {
+    window.catChart2.data.datasets[0].backgroundColor = originalChartData.reviewLabels.map(
+      label => getBarColor(label, selectedCategory)
+    );
+    window.catChart2.data.datasets[0].borderColor = originalChartData.reviewLabels.map(
+      label => getBarColor(label, selectedCategory)
+    );
+    window.catChart2.update();
+  }
+
+  // Update Chart 3 (Scatter)
+  if (window.catChart3 && originalChartData.scatterData) {
+    window.catChart3.data.datasets[0].backgroundColor = originalChartData.scatterData.map(
+      point => getPointColor(point.label, selectedCategory)
+    );
+    window.catChart3.data.datasets[0].borderColor = originalChartData.scatterData.map(
+      point => getPointColor(point.label, selectedCategory)
+    );
+    window.catChart3.update();
+  }
+
+  // Update Chart 4 (Cancellation)
+  if (window.catChart4 && originalChartData.cancelLabels) {
+    window.catChart4.data.datasets[0].backgroundColor = originalChartData.cancelLabels.map(
+      label => getBarColor(label, selectedCategory)
+    );
+    window.catChart4.data.datasets[0].borderColor = originalChartData.cancelLabels.map(
+      label => getBarColor(label, selectedCategory)
+    );
+    window.catChart4.update();
+  }
 }
 
 function setupFilterEvents3(originalData) {
@@ -231,6 +414,9 @@ function setupFilterEvents3(originalData) {
       document.getElementById("category-filter").value = "";
       document.getElementById("category-filter-display").textContent =
         "All categories";
+
+      // Clear highlighting
+      selectedCategory = null;
 
       // 🔄 Call the category-related redraw function
       drawCategoryCharts(originalData);
