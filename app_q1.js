@@ -5,13 +5,15 @@ document.addEventListener("DOMContentLoaded", () => {
     if (loading) loading.style.display = "none";
 
     preprocess(data);
+    populateGeoFilter();
+    setupFilterEvents(data); // Initialize filtering system and allData
+
+    // Initial render of the dashboard
     updateStats(data);
     updateTrends(data);
     updateMapInfoPanel(data);
-    populateGeoFilter();
     drawCharts(data);
     drawMap(data);
-    setupFilterEvents(data);
   });
 });
 
@@ -194,6 +196,13 @@ function drawBarChart(canvasId, labels, values, label, color, noteText = null) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      onClick: (event, elements) => {
+        if (elements.length > 0) {
+          const i = elements[0].index;
+          const state = event.chart.data.labels[i];
+          handleStateSelection(state);
+        }
+      },
       plugins: {
         legend: { display: false },
         tooltip: {
@@ -281,6 +290,13 @@ function drawScatterChart(canvasId, dataPoints, label, color, noteText = null) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      onClick: (event, elements) => {
+        if (elements.length > 0) {
+          const i = elements[0].index;
+          const state = event.chart.data.datasets[0].data[i].label;
+          handleStateSelection(state);
+        }
+      },
       plugins: {
         legend: { display: false },
         tooltip: {
@@ -348,32 +364,73 @@ function drawScatterChart(canvasId, dataPoints, label, color, noteText = null) {
 }
 
 // === STEP 5: Filters ===
+
+let allData = [];
+let selectedState = null;
+
+function handleStateSelection(stateAbbr) {
+  if (selectedState === stateAbbr) {
+    selectedState = null; // Toggle off if same state is clicked
+  } else {
+    selectedState = stateAbbr;
+  }
+
+  // Update stats cards with filtered data, but visualizations with all data for highlighting
+  const filteredData = selectedState
+    ? allData.filter((d) => d.customer_state === selectedState)
+    : allData;
+
+  updateStats(filteredData);
+  updateTrends(filteredData);
+  updateChartStyles();
+  updateMapStyles();
+
+  // Update UI controls
+  document.getElementById("geo-filter").value = selectedState || "";
+  document.getElementById("active-filter-display").textContent = selectedState
+    ? `Showing data for: ${selectedState}`
+    : "Showing all states";
+}
+
+function updateChartStyles() {
+  const defaultColor = "#0ea5e9";
+  const fadedColor = "rgba(14, 165, 233, 0.2)";
+
+  for (const chartId in charts) {
+    const chart = charts[chartId];
+    if (!chart) continue;
+
+    let colors;
+    if (chart.config.type === "scatter") {
+      colors = chart.data.datasets[0].data.map((point) =>
+        !selectedState || point.label === selectedState
+          ? defaultColor
+          : fadedColor
+      );
+    } else {
+      colors = chart.data.labels.map((label) =>
+        !selectedState || label === selectedState ? defaultColor : fadedColor
+      );
+    }
+    chart.data.datasets[0].backgroundColor = colors;
+    chart.update("none"); // 'none' for no animation
+  }
+}
+
 function setupFilterEvents(data) {
+  allData = data; // Store full dataset
+
   const filterEl = document.getElementById("geo-filter");
-  const displayEl = document.getElementById("active-filter-display");
   const resetBtn = document.getElementById("reset-selection");
 
-  if (!filterEl || !displayEl || !resetBtn) return;
+  if (!filterEl || !resetBtn) return;
 
   filterEl.addEventListener("change", function () {
-    const selectedState = this.value;
-    const filtered = selectedState
-      ? data.filter((d) => d.customer_state === selectedState)
-      : data;
-
-    updateStats(filtered);
-    drawCharts(filtered);
-    updateTrends(filtered);
-    updateMapInfoPanel(filtered);
-
-    displayEl.textContent = selectedState
-      ? `Showing data for: ${selectedState}`
-      : "Showing all states";
+    handleStateSelection(this.value || null);
   });
 
   resetBtn.addEventListener("click", () => {
-    filterEl.value = "";
-    filterEl.dispatchEvent(new Event("change"));
+    handleStateSelection(null);
   });
 }
 
@@ -605,13 +662,12 @@ const abbrToStateName = Object.entries(stateNameToAbbr).reduce(
 function stateFullName(code) {
   return `${abbrToStateName[code] || code} (${code})`;
 }
-let selectedState = null; // Track selected state
 
 function drawMap(data) {
   console.log("🔍 Starting drawMap");
 
-  const width = 600;
-  const height = 400; // Map height
+  const width = 500;
+  const height = 550; // Map height
   const legendHeight = 60; // Space for legend
   const totalHeight = height + legendHeight; // Total SVG height
 
@@ -633,7 +689,7 @@ function drawMap(data) {
       const projection = d3
         .geoMercator()
         .center([-54.5, -15.5])
-        .scale(500)
+        .scale(700)
         .translate([width / 2, height / 2]);
 
       const path = d3.geoPath().projection(projection);
@@ -653,7 +709,22 @@ function drawMap(data) {
         .domain([minRevenue, maxRevenue])
         .range(["#e0f2fe", "#0c4a6e"]);
 
-      const tooltip = d3.select("#selected-state-info");
+      const tooltip = d3
+        .select("body")
+        .append("div")
+        .attr("class", "map-tooltip")
+        .style("position", "absolute")
+        .style("background", "rgba(0, 0, 0, 0.9)")
+        .style("color", "white")
+        .style("padding", "10px 15px")
+        .style("border-radius", "6px")
+        .style("font-size", "0.9rem")
+        .style("pointer-events", "none")
+        .style("z-index", "1000")
+        .style("opacity", "0")
+        .style("transition", "opacity 0.2s")
+        .style("box-shadow", "0 2px 10px rgba(0, 0, 0, 0.3)")
+        .style("max-width", "200px");
 
       // Draw states
       svg
@@ -683,59 +754,60 @@ function drawMap(data) {
             .style("top", `${event.pageY - 40}px`)
             .style("opacity", 1);
 
-          d3.select(this).attr("stroke", "#000").attr("stroke-width", 2);
+          if (selectedState !== abbr) {
+            d3.select(this).attr("stroke", "#000").attr("stroke-width", 2);
+          }
         })
-        .on("mouseout", function () {
+        .on("mouseout", function (event, d) {
           tooltip.style("opacity", 0);
-          d3.select(this).attr("stroke", "#fff").attr("stroke-width", 1);
+          const abbr = stateNameToAbbr[d.properties.name];
+          if (selectedState !== abbr) {
+            d3.select(this).attr("stroke", "#fff").attr("stroke-width", 1);
+          }
         })
         .on("click", function (event, d) {
           const abbr = stateNameToAbbr[d.properties.name];
 
-          if (selectedState === abbr) {
-            selectedState = null;
-            updateStats(data);
-            drawCharts(data);
-            document.getElementById("geo-filter").value = "";
-            document.getElementById("active-filter-display").textContent =
-              "Showing all states";
-          } else {
-            selectedState = abbr;
-            const filtered = data.filter((row) => row.customer_state === abbr);
-            updateStats(filtered);
-            drawCharts(filtered);
-            document.getElementById("geo-filter").value = abbr;
-            document.getElementById(
-              "active-filter-display"
-            ).textContent = `Showing data for: ${abbr}`;
-          }
+          // Immediately clear all hover effects
+          d3.select("#brazil-map")
+            .selectAll("path")
+            .attr("stroke", "#fff")
+            .attr("stroke-width", 1);
+
+          handleStateSelection(abbr);
+          updateMapStyles(); // Apply selection styling
         });
 
-      // Add state labels
-      geo.features.forEach((d) => {
-        const centroid = path.centroid(d);
-        const abbr = stateNameToAbbr[d.properties.name];
-        const revenue = revenueByState.get(abbr) || 0;
-        const fillColor = colorScale(revenue);
-        const textColor = getTextColor(fillColor);
-
-        if (
-          centroid[0] > 0 &&
-          centroid[0] < width &&
-          centroid[1] > 0 &&
-          centroid[1] < height
-        ) {
-          svg
-            .append("text")
-            .attr("class", "state-label")
-            .attr("x", centroid[0])
-            .attr("y", centroid[1])
-            .attr("dy", "0.35em")
-            .attr("text-anchor", "middle")
-            .attr("fill", textColor)
-            .text(abbr);
-        }
-      });
+      // Add state labels using a data join to bind data correctly
+      svg
+        .selectAll(".state-label")
+        .data(geo.features)
+        .join("text")
+        .attr("class", "state-label")
+        .attr("x", (d) => path.centroid(d)[0])
+        .attr("y", (d) => path.centroid(d)[1])
+        .attr("dy", "0.35em")
+        .attr("text-anchor", "middle")
+        .attr("fill", (d) => {
+          const abbr = stateNameToAbbr[d.properties.name];
+          const revenue = revenueByState.get(abbr) || 0;
+          const fillColor = colorScale(revenue);
+          return getTextColor(fillColor);
+        })
+        .text((d) => stateNameToAbbr[d.properties.name])
+        .style("pointer-events", "none")
+        .style("font-size", "10px")
+        .style("display", (d) => {
+          const centroid = path.centroid(d);
+          // hide if outside bounds or for very small states
+          return centroid[0] > 0 &&
+            centroid[0] < width &&
+            centroid[1] > 0 &&
+            centroid[1] < height &&
+            path.area(d) > 100 // Heuristic for area
+            ? "initial"
+            : "none";
+        });
 
       // Optional legend bar
       const legend = svg
@@ -771,7 +843,7 @@ function drawMap(data) {
         .attr("height", 10)
         .style("fill", "url(#legend-gradient)");
 
-      legend.append("g").attr("transform", "translate(0, 10)").call(legendAxis);
+      legend.append("g").attr("transform", "translate(0, 20)").call(legendAxis);
 
       legend
         .append("text")
@@ -782,12 +854,36 @@ function drawMap(data) {
         .style("font-weight", "bold")
         .text("Revenue (R$)");
     })
-    .catch((error) => {
-      console.error("❌ Failed to load GeoJSON:", error);
-    });
+    .catch((err) => console.error("Error loading map data:", err));
 }
+
 function getTextColor(bgColor) {
   const rgb = d3.color(bgColor);
   const brightness = (rgb.r * 299 + rgb.g * 587 + rgb.b * 114) / 1000;
   return brightness > 140 ? "#000" : "#fff";
+}
+
+function updateMapStyles() {
+  d3.select("#brazil-map")
+    .selectAll("path") // These are state paths
+    .attr("fill-opacity", (d) => {
+      const abbr = stateNameToAbbr[d.properties.name];
+      return !selectedState || selectedState === abbr ? 1 : 0.3;
+    })
+    .attr("stroke", (d) => {
+      const abbr = stateNameToAbbr[d.properties.name];
+      return selectedState === abbr ? "#000" : "#fff";
+    })
+    .attr("stroke-width", (d) => {
+      const abbr = stateNameToAbbr[d.properties.name];
+      return selectedState === abbr ? 3 : 1;
+    });
+
+  d3.select("#brazil-map")
+    .selectAll(".state-label")
+    .attr("opacity", (d) => {
+      const abbr = stateNameToAbbr[d.properties.name];
+      console.log(abbr, selectedState);
+      return !selectedState || selectedState === abbr ? 1 : 0.5;
+    });
 }

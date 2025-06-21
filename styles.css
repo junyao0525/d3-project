@@ -234,7 +234,6 @@ input:checked + .slider:before {
 }
 
 .map-container {
-  flex: 1;
   border: 1px solid #e9ecef;
   border-right: none;
   padding: 15px;
@@ -358,13 +357,10 @@ canvas {
 }
 
 #brazil-map {
-  width: 100%;
   height: 100%;
-  min-height: 400px;
 }
 
 .map-svg {
-  width: 100%;
   height: 100%;
   display: block;
 }
@@ -407,7 +403,6 @@ canvas {
   font-size: 12px;
   font-weight: bold;
   text-anchor: middle;
-  transition: all 0.3s ease;
 }
 
 .state-highlight {
