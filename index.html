@@ -89,32 +89,39 @@
   </head>
 
   <body>
-    <header>🛒 Olist E-Commerce Analytics Dashboard</header>
-    <div class="loading" id="loading">Loading data...</div>
-    <div class="tabs">
-      <button class="tab-btn active" onclick="switchTab(0)">
-        🗺️ Geographic Insights
-      </button>
-      <button class="tab-btn" onclick="switchTab(1)">
-        📦 Product Performance
-      </button>
+    <div class="header-container">
+      <div class="header">Olist E-Commerce Analytics Dashboard</div>
+      <div class="tab-btn active" onclick="switchTab(0)">
+        Geographic Insights
+      </div>
+      <div class="tab-btn" onclick="switchTab(1)">Product Performance</div>
     </div>
+    <div class="loading" id="loading">Loading data...</div>
 
     <div class="selection-info" id="selection-info" style="display: none">
-      <span>🔍 Showing data for: </span>
+      <span>Showing data for: </span>
       <span id="selected-item">State</span>
       <button class="clear-btn" onclick="clearSelection()">
         Clear Selection
       </button>
     </div>
 
-    <div class="dashboard active geographic-tab">
-      <div class="dashboard-content">
-        <div class="filter-container">
-          <label for="geo-filter">🎯 Filter by State:</label>
-          <select id="geo-filter">
-            <option value="">All States</option>
-          </select>
+    <div class="main-container">
+      <!-- Sidebar -->
+      <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+          <h3>Filters</h3>
+        </div>
+
+        <!-- Geographic Filters -->
+        <div class="filter-section" id="geo-filters">
+          <h4>Geographic Filters</h4>
+          <div class="filter-group">
+            <label for="geo-filter">Filter by State:</label>
+            <select id="geo-filter">
+              <option value="">All States</option>
+            </select>
+          </div>
           <button id="reset-selection" class="reset-btn">
             Reset Selection
           </button>
@@ -123,115 +130,20 @@
           </div>
         </div>
 
-        <div class="section-title">
-          <span>📊 Regional Performance Metrics</span>
-        </div>
-
-        <div class="dashboard-grid">
-          <div class="info-card">
-            <h3>Total Revenue</h3>
-            <div class="value" id="total-revenue">Loading</div>
-            <div class="label">
-              <div class="label">Loading...</div>
-            </div>
+        <!-- Product Filters -->
+        <div class="filter-section" id="product-filters" style="display: none">
+          <h4>Product Filters</h4>
+          <div class="filter-group">
+            <label for="category-filter">Filter by Product Category:</label>
+            <select id="category-filter">
+              <option value="">All Categories</option>
+              <option value="electronics">Electronics</option>
+              <option value="home">Home & Kitchen</option>
+              <option value="books">Books</option>
+              <option value="beauty">Beauty</option>
+              <option value="clothing">Clothing</option>
+            </select>
           </div>
-
-          <div class="info-card">
-            <h3>Avg. Delivery Time</h3>
-            <div class="value" id="avg-delivery">Loading</div>
-            <div class="label">
-              Nationwide average |
-              <div class="label">Loading...</div>
-            </div>
-          </div>
-
-          <div class="info-card">
-            <h3>Customer Satisfaction</h3>
-            <div class="value" id="avg-review">Loading</div>
-            <div class="label">
-              <div class="label">Loading...</div>
-            </div>
-          </div>
-        </div>
-        <div class="section-title">
-          <span>🗺️ Geographic Distribution</span>
-        </div>
-
-        <div class="map-container">
-          <div class="map-title">💰 Total Revenue by Brazilian State</div>
-          <div class="map-box">
-            <div id="brazil-map">
-              <svg class="map-svg" style="background-color: #f9f9f9"></svg>
-            </div>
-            <div class="map-info-panel">
-              <div class="map-title">Regional Performance Summary</div>
-              <div class="map-stats">
-                <div class="stat-item">
-                  <div class="stat-label">Top Performing State</div>
-                  <div class="stat-value">Loading...</div>
-                  <div class="stat-detail">Loading...</div>
-                </div>
-                <div class="stat-item">
-                  <div class="stat-label">Fastest Delivery</div>
-                  <div class="stat-value">Loading...</div>
-                  <div class="stat-detail">Loading...</div>
-                </div>
-                <div class="stat-item">
-                  <div class="stat-label">Highest Satisfaction</div>
-                  <div class="stat-value">Loading...</div>
-                  <div class="stat-detail">Loading...</div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div id="selected-state-info"></div>
-        </div>
-      </div>
-
-      <div class="section-title">
-        <span>📈 State-by-State Comparison</span>
-      </div>
-
-      <div class="dashboard-grid-2">
-        <div class="chart-container">
-          <div class="chart-title">Revenue Distribution by State</div>
-          <canvas id="revenueByState" height="400"></canvas>
-          <div class="chart-note">Loading ...</div>
-        </div>
-
-        <div class="chart-container">
-          <div class="chart-title">Delivery Efficiency</div>
-          <canvas id="deliveryTimeByState" height="400"></canvas>
-          <div class="chart-note">Loading ...</div>
-        </div>
-
-        <div class="chart-container">
-          <div class="chart-title">Customer Satisfaction Scores</div>
-          <canvas id="reviewScoreByState" height="400"></canvas>
-          <div class="chart-note">Loading ...</div>
-        </div>
-
-        <div class="chart-container">
-          <div class="chart-title">Freight Cost vs Revenue</div>
-          <canvas id="freightVsRevenue" height="400"></canvas>
-          <div class="chart-note">Loading ...</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Product Performance Tab -->
-    <div class="dashboard product-tab">
-      <div class="dashboard-content">
-        <div class="filter-container">
-          <label for="category-filter">📦 Filter by Product Category:</label>
-          <select id="category-filter">
-            <option value="">All Categories</option>
-            <option value="electronics">Electronics</option>
-            <option value="home">Home & Kitchen</option>
-            <option value="books">Books</option>
-            <option value="beauty">Beauty</option>
-            <option value="clothing">Clothing</option>
-          </select>
           <button id="reset-category-filter" class="reset-btn">
             Reset Selection
           </button>
@@ -239,79 +151,140 @@
             All categories
           </div>
         </div>
+      </div>
 
-        <div class="section-title">💡 Product Performance Insights</div>
-        <div class="dashboard-grid">
-          <div class="info-card" id="lowest-revenue-card">
-            <h3>📉 Lowest Revenue Category</h3>
-            <div class="value">loading...</div>
-            <div class="label">loading...</div>
-            <div class="trend-indicator trend-down">loading...</div>
+      <!-- Main Content -->
+      <div class="content-area">
+        <div class="dashboard active geographic-tab">
+          <div class="dashboard-content">
+            <div class="dashboard-grid">
+              <div class="info-card">
+                <div class="value" id="total-revenue">Loading</div>
+                <div class="h3">Total Revenue</div>
+              </div>
+
+              <div class="info-card">
+                <div class="value" id="avg-delivery">Loading</div>
+                <div class="h3">Avg. Delivery Time</div>
+              </div>
+
+              <div class="info-card">
+                <div class="value" id="avg-review">Loading</div>
+                <div class="h3">Customer Satisfaction</div>
+              </div>
+            </div>
+            <div class="map-container">
+              <div class="map-title">Total Revenue by Brazilian State</div>
+              <div class="map-box">
+                <div id="brazil-map">
+                  <svg class="map-svg" style="background-color: #f9f9f9"></svg>
+                </div>
+                <div class="map-info-panel">
+                  <div class="map-title">Regional Performance Summary</div>
+                  <div class="map-stats">
+                    <div class="stat-item">
+                      <div class="stat-label">Top Performing State</div>
+                      <div class="stat-value">Loading...</div>
+                      <div class="stat-detail">Loading...</div>
+                    </div>
+                    <div class="stat-item">
+                      <div class="stat-label">Fastest Delivery</div>
+                      <div class="stat-value">Loading...</div>
+                      <div class="stat-detail">Loading...</div>
+                    </div>
+                    <div class="stat-item">
+                      <div class="stat-label">Highest Satisfaction</div>
+                      <div class="stat-value">Loading...</div>
+                      <div class="stat-detail">Loading...</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div id="selected-state-info"></div>
+            </div>
           </div>
 
-          <div class="info-card" id="lowest-review-card">
-            <h3>😞 Lowest Review Score</h3>
-            <div class="value">loading...</div>
-            <div class="label">loading...</div>
-            <div class="trend-indicator trend-down">loading...</div>
+          <div class="section-title">
+            <span>State-by-State Comparison</span>
           </div>
 
-          <div class="info-card" id="fastest-growth-card">
-            <h3>📈 Fastest Growing</h3>
-            <div class="value">loading...</div>
-            <div class="label">loading...</div>
-            <div class="trend-indicator trend-up">loading...</div>
-          </div>
+          <div class="dashboard-grid-2">
+            <div class="chart-container">
+              <div class="chart-title">Revenue Distribution by State</div>
+              <canvas id="revenueByState" height="400"></canvas>
+              <div class="chart-note">Loading ...</div>
+            </div>
 
-          <div class="info-card" id="highest-satisfaction-card">
-            <h3>⭐ Highest Satisfaction</h3>
-            <div class="value">loading...</div>
-            <div class="label">loading...</div>
-            <div class="trend-indicator trend-up">loading...</div>
+            <div class="chart-container">
+              <div class="chart-title">Delivery Efficiency</div>
+              <canvas id="deliveryTimeByState" height="400"></canvas>
+              <div class="chart-note">Loading ...</div>
+            </div>
+
+            <div class="chart-container">
+              <div class="chart-title">Customer Satisfaction Scores</div>
+              <canvas id="reviewScoreByState" height="400"></canvas>
+              <div class="chart-note">Loading ...</div>
+            </div>
+
+            <div class="chart-container">
+              <div class="chart-title">Freight Cost vs Revenue</div>
+              <canvas id="freightVsRevenue" height="400"></canvas>
+              <div class="chart-note">Loading ...</div>
+            </div>
           </div>
         </div>
 
-        <div class="section-title">📊 Category Performance Analysis</div>
-        <div class="dashboard-grid">
-          <div class="chart-container">
-            <div class="chart-title">Revenue Distribution by Category</div>
-            <canvas id="revenueByCategory"></canvas>
-            <div class="chart-note">Loading ...</div>
-          </div>
+        <!-- Product Performance Tab -->
+        <div class="dashboard product-tab">
+          <div class="dashboard-content">
+            <div class="dashboard-grid">
+              <div class="info-card" id="lowest-revenue-card">
+                <div class="value">loading...</div>
+                <div class="h3">Lowest Revenue Category</div>
+              </div>
 
-          <div class="chart-container">
-            <div class="chart-title">Customer Satisfaction Scores</div>
-            <canvas id="reviewByCategory"></canvas>
-            <div class="chart-note">Loading ...</div>
-          </div>
+              <div class="info-card" id="lowest-review-card">
+                <div class="value">loading...</div>
+                <div class="h3">Lowest Review Score</div>
+              </div>
 
-          <div class="chart-container wide">
-            <div class="chart-title">Revenue vs Customer Satisfaction</div>
-            <canvas id="scatterRevenueReview"></canvas>
-            <div class="chart-note">Loading ...</div>
-          </div>
+              <div class="info-card" id="fastest-growth-card">
+                <div class="value">loading...</div>
+                <div class="h3">Fastest Growing</div>
+              </div>
 
-          <div class="chart-container">
-            <div class="chart-title">Return Rates by Category</div>
-            <canvas id="returnByCategory"></canvas>
-            <div class="chart-note">Loading ...</div>
-          </div>
-        </div>
+              <div class="info-card" id="highest-satisfaction-card">
+                <div class="value">loading...</div>
+                <div class="h3">Highest Satisfaction</div>
+              </div>
+            </div>
+            <div class="dashboard-grid">
+              <div class="chart-container">
+                <div class="chart-title">Revenue Distribution by Category</div>
+                <canvas id="revenueByCategory"></canvas>
+                <div class="chart-note">Loading ...</div>
+              </div>
 
-        <div class="action-panel">
-          <div class="action-title">Recommended Actions</div>
-          <ul class="action-list">
-            <li>
-              📦 Investigate quality issues in Electronics category driving low
-              reviews
-            </li>
-            <li>
-              📚 Develop promotion strategy for Books category to boost revenue
-            </li>
-            <li>
-              💄 Capitalize on Beauty category growth with targeted marketing
-            </li>
-          </ul>
+              <div class="chart-container">
+                <div class="chart-title">Customer Satisfaction Scores</div>
+                <canvas id="reviewByCategory"></canvas>
+                <div class="chart-note">Loading ...</div>
+              </div>
+
+              <div class="chart-container wide">
+                <div class="chart-title">Revenue vs Customer Satisfaction</div>
+                <canvas id="scatterRevenueReview"></canvas>
+                <div class="chart-note">Loading ...</div>
+              </div>
+
+              <div class="chart-container">
+                <div class="chart-title">Return Rates by Category</div>
+                <canvas id="returnByCategory"></canvas>
+                <div class="chart-note">Loading ...</div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -336,6 +309,15 @@
         document.querySelectorAll(".tab-btn")[index].classList.add("active");
         document.querySelectorAll(".dashboard")[index].classList.add("active");
         document.querySelectorAll(".dashboard")[index].style.display = "block";
+
+        // Show/hide appropriate filters
+        if (index === 0) {
+          document.getElementById("geo-filters").style.display = "block";
+          document.getElementById("product-filters").style.display = "none";
+        } else {
+          document.getElementById("geo-filters").style.display = "none";
+          document.getElementById("product-filters").style.display = "block";
+        }
       }
     </script>
   </body>

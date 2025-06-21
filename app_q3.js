@@ -276,12 +276,11 @@ function showCategoryInsights(data) {
   const card0 = document.getElementById("lowest-revenue-card");
   if (card0) {
     card0.querySelector(".value").textContent = lowestRevenue[0];
-    card0.querySelector(
-      ".label"
-    ).textContent = `R$${lowestRevenue[1].totalRevenue.toLocaleString()} last quarter`;
     const trend0 = card0.querySelector(".trend-indicator");
-    trend0.textContent = "↓12% from previous";
-    trend0.className = "trend-indicator trend-down";
+    if (trend0) {
+      trend0.textContent = "↓12% from previous";
+      trend0.className = "trend-indicator trend-down";
+    }
   }
 
   // === Lowest Review Score ===
@@ -295,10 +294,11 @@ function showCategoryInsights(data) {
     card1.querySelector(
       ".value"
     ).textContent = `${lowestReview[1].avgReview.toFixed(1)}/5`;
-    card1.querySelector(".label").textContent = `${lowestReview[0]} category`;
     const trend1 = card1.querySelector(".trend-indicator");
-    trend1.textContent = "↓0.3 from last year";
-    trend1.className = "trend-indicator trend-down";
+    if (trend1) {
+      trend1.textContent = "↓0.3 from last year";
+      trend1.className = "trend-indicator trend-down";
+    }
   }
 
   // === Fastest Growing ===
@@ -314,12 +314,11 @@ function showCategoryInsights(data) {
   const card2 = document.getElementById("fastest-growth-card");
   if (card2) {
     card2.querySelector(".value").textContent = fastestGrowing[0];
-    card2.querySelector(".label").textContent = `↑${fastestGrowing[1].toFixed(
-      0
-    )}% growth YoY`;
     const trend2 = card2.querySelector(".trend-indicator");
-    trend2.textContent = "Trending upward";
-    trend2.className = "trend-indicator trend-up";
+    if (trend2) {
+      trend2.textContent = "Trending upward";
+      trend2.className = "trend-indicator trend-up";
+    }
   }
 
   // === Highest Satisfaction ===
@@ -333,10 +332,11 @@ function showCategoryInsights(data) {
     card3.querySelector(
       ".value"
     ).textContent = `${highestReview[1].avgReview.toFixed(1)}/5`;
-    card3.querySelector(".label").textContent = highestReview[0];
     const trend3 = card3.querySelector(".trend-indicator");
-    trend3.textContent = "Consistently high";
-    trend3.className = "trend-indicator trend-up";
+    if (trend3) {
+      trend3.textContent = "Consistently high";
+      trend3.className = "trend-indicator trend-up";
+    }
   }
 
   console.log("✅ showCategoryInsights completed successfully");

@@ -483,7 +483,9 @@ function drawMap(data) {
   console.log("🔍 Starting drawMap");
 
   const width = 800;
-  const height = 400; // ↓ Reduce height
+  const height = 400; // Map height
+  const legendHeight = 60; // Space for legend
+  const totalHeight = height + legendHeight; // Total SVG height
 
   d3.json(
     "https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/brazil-states.geojson"
@@ -498,7 +500,7 @@ function drawMap(data) {
         .append("svg")
         .attr("class", "map-svg")
         .attr("width", width)
-        .attr("height", height);
+        .attr("height", totalHeight);
 
       const projection = d3
         .geoMercator()
@@ -610,7 +612,7 @@ function drawMap(data) {
       // Optional legend bar
       const legend = svg
         .append("g")
-        .attr("transform", `translate(${width / 2 - 150}, ${height - 40})`);
+        .attr("transform", `translate(${width / 2 - 150}, ${height + 10})`);
 
       const legendScale = d3
         .scaleLinear()
