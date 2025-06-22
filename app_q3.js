@@ -6,17 +6,16 @@ let originalChartData = {};
 let categoryData = null; // Store the full dataset locally for category charts
 
 // Global variables for sorting functionality
-let revenueSortOrder = 'desc'; // Default: descending (highest first)
-let reviewSortOrder = 'desc';  // Default: descending (highest first)
-let returnSortOrder = 'desc';  // Default: descending (highest first)
-
+let revenueSortOrder = "desc"; // Default: descending (highest first)
+let reviewSortOrder = "desc"; // Default: descending (highest first)
+let returnSortOrder = "desc"; // Default: descending (highest first)
 
 function formatCategoryName(name) {
-  if (!name || typeof name !== 'string') return '';
+  if (!name || typeof name !== "string") return "";
   return name
-    .split('_')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
 }
 
 d3.csv("olist_dataset.csv").then((data) => {
@@ -32,7 +31,7 @@ d3.csv("olist_dataset.csv").then((data) => {
 function drawCategoryAnalysis(data) {
   // Store data locally for access in toggleCategorySelection
   categoryData = data;
-  
+
   const categories = Array.from(
     new Set(data.map((d) => d.product_category_name_english)) // Use English name
   ).filter(Boolean); // Remove any null/undefined entries
@@ -43,7 +42,8 @@ function drawCategoryAnalysis(data) {
   // Clear existing options first
   select.innerHTML = '<option value="">All Categories</option>';
 
-  categories.sort().forEach((cat) => { // Sort categories alphabetically
+  categories.sort().forEach((cat) => {
+    // Sort categories alphabetically
     const opt = document.createElement("option");
     opt.value = cat;
     opt.textContent = formatCategoryName(cat); // Format for display
@@ -57,10 +57,10 @@ function drawCategoryAnalysis(data) {
       : data;
     document.getElementById("category-filter-display").textContent =
       val || "All categories";
-    
+
     // Clear highlighting when filter changes
     selectedCategory = null;
-    
+
     drawCategoryCharts(filtered);
     showCategoryInsights(filtered);
   });
@@ -99,22 +99,28 @@ function drawCategoryCharts(data) {
 
   // === Derived Metrics ===
   const totalRevenue = d3.sum(catAgg, ([_, v]) => v.totalRevenue);
-  
+
   // Get top 10 for each metric
   const topRevenue = catAgg
-    .sort((a, b) => revenueSortOrder === 'desc' 
-      ? d3.descending(a[1].totalRevenue, b[1].totalRevenue)
-      : d3.ascending(a[1].totalRevenue, b[1].totalRevenue))
+    .sort((a, b) =>
+      revenueSortOrder === "desc"
+        ? d3.descending(a[1].totalRevenue, b[1].totalRevenue)
+        : d3.ascending(a[1].totalRevenue, b[1].totalRevenue)
+    )
     .slice(0, 10);
   const topReview = catAgg
-    .sort((a, b) => reviewSortOrder === 'desc'
-      ? d3.descending(a[1].avgReview, b[1].avgReview)
-      : d3.ascending(a[1].avgReview, b[1].avgReview))
+    .sort((a, b) =>
+      reviewSortOrder === "desc"
+        ? d3.descending(a[1].avgReview, b[1].avgReview)
+        : d3.ascending(a[1].avgReview, b[1].avgReview)
+    )
     .slice(0, 10);
   const topCancel = catAgg
-    .sort((a, b) => returnSortOrder === 'desc'
-      ? d3.descending(a[1].cancelRate, b[1].cancelRate)
-      : d3.ascending(a[1].cancelRate, b[1].cancelRate))
+    .sort((a, b) =>
+      returnSortOrder === "desc"
+        ? d3.descending(a[1].cancelRate, b[1].cancelRate)
+        : d3.ascending(a[1].cancelRate, b[1].cancelRate)
+    )
     .slice(0, 10);
 
   // Function to get chart data including selected category if not in top 10
@@ -122,44 +128,54 @@ function drawCategoryCharts(data) {
     if (!selectedCategory) {
       return topData;
     }
-    
+
     // Check if selected category is already in top data
     const isInTop = topData.some(([cat, _]) => cat === selectedCategory);
-    
+
     if (isInTop) {
       return topData;
     }
-    
+
     // Find the selected category data
     const selectedData = catAgg.find(([cat, _]) => cat === selectedCategory);
-    
+
     if (!selectedData) {
       return topData;
     }
-    
+
     // Add selected category to the data and sort appropriately
     const combinedData = [...topData, selectedData];
-    
+
     // Sort based on the metric (revenue, review, or cancel rate)
     if (topData === topRevenue) {
-      return combinedData.sort((a, b) => sortOrder === 'desc'
-        ? d3.descending(a[1].totalRevenue, b[1].totalRevenue)
-        : d3.ascending(a[1].totalRevenue, b[1].totalRevenue));
+      return combinedData.sort((a, b) =>
+        sortOrder === "desc"
+          ? d3.descending(a[1].totalRevenue, b[1].totalRevenue)
+          : d3.ascending(a[1].totalRevenue, b[1].totalRevenue)
+      );
     } else if (topData === topReview) {
-      return combinedData.sort((a, b) => sortOrder === 'desc'
-        ? d3.descending(a[1].avgReview, b[1].avgReview)
-        : d3.ascending(a[1].avgReview, b[1].avgReview));
+      return combinedData.sort((a, b) =>
+        sortOrder === "desc"
+          ? d3.descending(a[1].avgReview, b[1].avgReview)
+          : d3.ascending(a[1].avgReview, b[1].avgReview)
+      );
     } else if (topData === topCancel) {
-      return combinedData.sort((a, b) => sortOrder === 'desc'
-        ? d3.descending(a[1].cancelRate, b[1].cancelRate)
-        : d3.ascending(a[1].cancelRate, b[1].cancelRate));
+      return combinedData.sort((a, b) =>
+        sortOrder === "desc"
+          ? d3.descending(a[1].cancelRate, b[1].cancelRate)
+          : d3.ascending(a[1].cancelRate, b[1].cancelRate)
+      );
     }
-    
+
     return combinedData;
   }
 
   // Get chart data with selected category included if necessary
-  const revenueData = getChartData(topRevenue, selectedCategory, revenueSortOrder);
+  const revenueData = getChartData(
+    topRevenue,
+    selectedCategory,
+    revenueSortOrder
+  );
   const reviewData = getChartData(topReview, selectedCategory, reviewSortOrder);
   const cancelData = getChartData(topCancel, selectedCategory, returnSortOrder);
 
@@ -177,42 +193,49 @@ function drawCategoryCharts(data) {
     data: {
       labels: revLabels,
       datasets: [
-        { 
-          label: "Revenue (R$)", 
-          data: revValues, 
-          backgroundColor: revLabels.map(label => getBarColor(label, selectedCategory)),
-          borderColor: revLabels.map(label => getBarColor(label, selectedCategory)),
-          borderWidth: 1
+        {
+          label: "Revenue (R$)",
+          data: revValues,
+          backgroundColor: revLabels.map((label) =>
+            getBarColor(label, selectedCategory)
+          ),
+          borderColor: revLabels.map((label) =>
+            getBarColor(label, selectedCategory)
+          ),
+          borderWidth: 1,
         },
       ],
     },
-    options: { 
-      responsive: true, 
-      indexAxis: 'y',
-      scales: { 
-        x: { // Value Axis
+    options: {
+      responsive: true,
+      indexAxis: "y",
+      scales: {
+        x: {
+          // Value Axis
           beginAtZero: true,
           title: {
             display: true,
-            text: 'Revenue (R$)'
+            text: "Revenue (R$)",
           },
           ticks: {
-            callback: function(value) {
+            callback: function (value) {
               return `R$ ${(value / 1000).toFixed(0)}k`;
-            }
-          }
+            },
+          },
         },
-        y: { // Category Axis
+        y: {
+          // Category Axis
           grid: {
-            display: false
+            display: false,
           },
           ticks: {
-            callback: function(value) { // 'value' is the index
+            callback: function (value) {
+              // 'value' is the index
               const label = this.getLabelForValue(value);
               return formatCategoryName(label);
-            }
-          }
-        }
+            },
+          },
+        },
       },
       onClick: (event, elements) => {
         if (elements.length > 0) {
@@ -223,36 +246,43 @@ function drawCategoryCharts(data) {
       },
       plugins: {
         legend: {
-          display: false
+          display: false,
         },
         tooltip: {
           callbacks: {
-            title: function(tooltipItems) {
+            title: function (tooltipItems) {
               // Return the formatted category name as the tooltip title
               if (tooltipItems.length > 0) {
                 const label = tooltipItems[0].label;
                 return formatCategoryName(label);
               }
-              return '';
+              return "";
             },
-            label: function(context) {
+            label: function (context) {
               // Return the formatted revenue as the tooltip body
               const revenue = context.parsed.x;
               if (revenue !== null) {
-                return `Revenue: R$ ${revenue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                return `Revenue: R$ ${revenue.toLocaleString("pt-BR", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}`;
               }
-              return '';
-            }
-          }
-        }
-      }
+              return "";
+            },
+          },
+        },
+      },
     },
   });
   document
     .querySelector("#revenueByCategory")
     .parentElement.querySelector(
       ".chart-note"
-    ).textContent = `${formatCategoryName(topRevCat[0])} accounts for ${revenuePct}% of total revenue (${revenueSortOrder === 'desc' ? 'Highest' : 'Lowest'} first)`;
+    ).textContent = `${formatCategoryName(
+    topRevCat[0]
+  )} accounts for ${revenuePct}% of total revenue (${
+    revenueSortOrder === "desc" ? "Highest" : "Lowest"
+  } first)`;
 
   // === Chart 2: Avg Review Score (Lollipop) ===
   const reviewLabels = reviewData.map((d) => d[0]);
@@ -270,44 +300,54 @@ function drawCategoryCharts(data) {
         {
           label: "Avg Review Score",
           data: reviewValues,
-          backgroundColor: reviewLabels.map(label => getBarColor(label, selectedCategory)),
-          borderColor: reviewLabels.map(label => getBarColor(label, selectedCategory)),
+          backgroundColor: reviewLabels.map((label) =>
+            getBarColor(label, selectedCategory)
+          ),
+          borderColor: reviewLabels.map((label) =>
+            getBarColor(label, selectedCategory)
+          ),
           barThickness: 4, // This makes the bar look like a stick
         },
         {
-          label: 'Avg Review Score dot',
+          label: "Avg Review Score dot",
           data: reviewValues,
-          type: 'scatter',
-          backgroundColor: reviewLabels.map(label => getBarColor(label, selectedCategory)),
-          borderColor: reviewLabels.map(label => getBarColor(label, selectedCategory)),
+          type: "scatter",
+          backgroundColor: reviewLabels.map((label) =>
+            getBarColor(label, selectedCategory)
+          ),
+          borderColor: reviewLabels.map((label) =>
+            getBarColor(label, selectedCategory)
+          ),
           radius: 8,
-          hoverRadius: 8
-        }
+          hoverRadius: 8,
+        },
       ],
     },
     options: {
       responsive: true,
-      indexAxis: 'y',
-      scales: { 
-        x: { // Value Axis
-          beginAtZero: true, 
+      indexAxis: "y",
+      scales: {
+        x: {
+          // Value Axis
+          beginAtZero: true,
           max: 5,
           title: {
             display: true,
-            text: 'Average Score (out of 5)'
-          }
+            text: "Average Score (out of 5)",
+          },
         },
-        y: { // Category Axis
+        y: {
+          // Category Axis
           grid: {
-            display: false
+            display: false,
           },
           ticks: {
-            callback: function(value) {
+            callback: function (value) {
               const label = this.getLabelForValue(value);
               return formatCategoryName(label);
-            }
-          }
-        }
+            },
+          },
+        },
       },
       onClick: (event, elements) => {
         if (elements.length > 0) {
@@ -319,40 +359,42 @@ function drawCategoryCharts(data) {
       },
       plugins: {
         legend: {
-          display: false
+          display: false,
         },
         tooltip: {
           // Only show tooltips for the scatter plot points (the lollipop head)
-          filter: function(tooltipItem) {
+          filter: function (tooltipItem) {
             return tooltipItem.datasetIndex === 1;
           },
           callbacks: {
-            title: function(tooltipItems) {
+            title: function (tooltipItems) {
               if (tooltipItems.length > 0) {
                 const label = tooltipItems[0].label;
                 return formatCategoryName(label);
               }
-              return '';
+              return "";
             },
-            label: function(context) {
+            label: function (context) {
               const score = context.parsed.x;
               if (score !== null) {
                 return `Avg. Score: ${score.toFixed(2)} / 5`;
               }
-              return '';
-            }
-          }
-        }
-      }
+              return "";
+            },
+          },
+        },
+      },
     },
   });
   document
     .querySelector("#reviewByCategory")
-    .parentElement.querySelector(".chart-note").textContent = `${
-    formatCategoryName(bestReviewCat[0])
-  } has the ${reviewSortOrder === 'desc' ? 'highest' : 'lowest'} satisfaction with ${bestReviewCat[1].avgReview.toFixed(
-    2
-  )} stars (${reviewSortOrder === 'desc' ? 'Highest' : 'Lowest'} first)`;
+    .parentElement.querySelector(
+      ".chart-note"
+    ).textContent = `${formatCategoryName(bestReviewCat[0])} has the ${
+    reviewSortOrder === "desc" ? "highest" : "lowest"
+  } satisfaction with ${bestReviewCat[1].avgReview.toFixed(2)} stars (${
+    reviewSortOrder === "desc" ? "Highest" : "Lowest"
+  } first)`;
 
   // === Chart 3: Scatter — Revenue vs Avg Review ===
   const scatterCtx = document
@@ -371,11 +413,15 @@ function drawCategoryCharts(data) {
         {
           label: "Categories",
           data: scatterData,
-          backgroundColor: scatterData.map(point => getPointColor(point.label, selectedCategory)),
-          borderColor: scatterData.map(point => getPointColor(point.label, selectedCategory)),
+          backgroundColor: scatterData.map((point) =>
+            getPointColor(point.label, selectedCategory)
+          ),
+          borderColor: scatterData.map((point) =>
+            getPointColor(point.label, selectedCategory)
+          ),
           borderWidth: 1,
           pointRadius: 6,
-          pointHoverRadius: 8
+          pointHoverRadius: 8,
         },
       ],
     },
@@ -390,7 +436,7 @@ function drawCategoryCharts(data) {
       },
       plugins: {
         legend: {
-          display: false
+          display: false,
         },
         tooltip: {
           callbacks: {
@@ -403,25 +449,24 @@ function drawCategoryCharts(data) {
       },
       scales: {
         x: {
-          min: 0,
+          min: 2,
           max: 5,
-          suggestedMin: 2.5,
           title: { display: true, text: "Avg Review Score" },
           ticks: {
-            callback: function(value) {
+            callback: function (value) {
               const label = this.getLabelForValue(value);
               return formatCategoryName(label);
-            }
-          }
+            },
+          },
         },
         y: {
           title: { display: true, text: "Revenue (R$)" },
           beginAtZero: true,
           ticks: {
-            callback: function(value) {
+            callback: function (value) {
               return `R$ ${(value / 1000).toFixed(0)}k`;
-            }
-          }
+            },
+          },
         },
       },
     },
@@ -435,12 +480,14 @@ function drawCategoryCharts(data) {
   document
     .querySelector("#scatterRevenueReview")
     .parentElement.querySelector(".chart-note").textContent = quadrantWinner
-    ? `${formatCategoryName(quadrantWinner.label)} shows strong growth in both revenue and satisfaction`
+    ? `${formatCategoryName(
+        quadrantWinner.label
+      )} shows strong growth in both revenue and satisfaction`
     : "No standout category in both metrics";
 
   // === Chart 4: Return Rates by Category ===
   const cancelLabels = cancelData.map((d) => d[0]);
-  const cancelRates = cancelData.map((d) => (d[1].cancelRate * 100));
+  const cancelRates = cancelData.map((d) => d[1].cancelRate * 100);
   const worstCancelCat = cancelData[0];
 
   const cancelCtx = document
@@ -460,7 +507,7 @@ function drawCategoryCharts(data) {
     },
     options: {
       responsive: true,
-      indexAxis: 'y', // Make it horizontal
+      indexAxis: "y", // Make it horizontal
       onClick: (event, elements) => {
         if (elements.length > 0) {
           const clickedIndex = elements[0].index;
@@ -469,62 +516,71 @@ function drawCategoryCharts(data) {
         }
       },
       scales: {
-        x: { // Value axis
+        x: {
+          // Value axis
           beginAtZero: true,
           title: {
             display: true,
-            text: 'Cancellation Rate (%)'
-          }
+            text: "Cancellation Rate (%)",
+          },
         },
-        y: { // Category axis
+        y: {
+          // Category axis
           grid: {
-            display: false
+            display: false,
           },
           ticks: {
-            callback: function(value) {
+            callback: function (value) {
               const label = this.getLabelForValue(value);
               return formatCategoryName(label);
-            }
-          }
-        }
+            },
+          },
+        },
       },
       plugins: {
         legend: {
-          display: false // Hide legend for single-dataset chart
+          display: false, // Hide legend for single-dataset chart
         },
         tooltip: {
           callbacks: {
-            title: function(tooltipItems) {
+            title: function (tooltipItems) {
               if (tooltipItems.length > 0) {
                 const label = tooltipItems[0].label;
                 return formatCategoryName(label);
               }
-              return '';
+              return "";
             },
-            label: function(context) {
+            label: function (context) {
               const rate = context.parsed.x;
               if (rate !== null) {
                 return `Cancellation Rate: ${rate.toFixed(2)}%`;
               }
-              return '';
-            }
-          }
-        }
-      }
+              return "";
+            },
+          },
+        },
+      },
     },
   });
   document
     .querySelector("#returnByCategory")
-    .parentElement.querySelector(".chart-note").textContent = `${
-    formatCategoryName(worstCancelCat[0])
-  } has the ${returnSortOrder === 'desc' ? 'highest' : 'lowest'} return rate at ${(
-    worstCancelCat[1].cancelRate * 100
-  ).toFixed(1)}% (${returnSortOrder === 'desc' ? 'Highest' : 'Lowest'} first)`;
+    .parentElement.querySelector(
+      ".chart-note"
+    ).textContent = `${formatCategoryName(worstCancelCat[0])} has the ${
+    returnSortOrder === "desc" ? "highest" : "lowest"
+  } return rate at ${(worstCancelCat[1].cancelRate * 100).toFixed(1)}% (${
+    returnSortOrder === "desc" ? "Highest" : "Lowest"
+  } first)`;
 
   // Store original data for highlighting
   originalChartData = {
-    revLabels, revValues, reviewLabels, reviewValues, 
-    scatterData, cancelLabels, cancelRates
+    revLabels,
+    revValues,
+    reviewLabels,
+    reviewValues,
+    scatterData,
+    cancelLabels,
+    cancelRates,
   };
 }
 
@@ -544,7 +600,7 @@ function getBarColor(category, selectedCategory) {
 function getPointColor(category, selectedCategory) {
   const baseColor = "#f59e0b";
   const baseColorTransparent = "rgba(245, 158, 11, 0.3)";
-  
+
   if (!selectedCategory || category === selectedCategory) {
     return baseColor;
   } else {
@@ -561,16 +617,20 @@ function toggleCategorySelection(category) {
     // Select the new category
     selectedCategory = category;
   }
-  
+
   // Check if we have valid data before redrawing
-  if (!categoryData || !Array.isArray(categoryData) || categoryData.length === 0) {
+  if (
+    !categoryData ||
+    !Array.isArray(categoryData) ||
+    categoryData.length === 0
+  ) {
     console.error("❌ No valid data available for chart redraw");
     return;
   }
-  
+
   // Redraw all charts to include the selected category if it's not in top 10
   drawCategoryCharts(categoryData);
-  
+
   // Update highlighting for existing charts
   updateChartHighlighting();
 }
@@ -579,20 +639,23 @@ function toggleCategorySelection(category) {
 function updateChartHighlighting() {
   // Update Chart 1 (Revenue)
   if (window.catChart1 && originalChartData.revLabels) {
-    window.catChart1.data.datasets[0].backgroundColor = originalChartData.revLabels.map(
-      label => getBarColor(label, selectedCategory)
-    );
-    window.catChart1.data.datasets[0].borderColor = originalChartData.revLabels.map(
-      label => getBarColor(label, selectedCategory)
-    );
+    window.catChart1.data.datasets[0].backgroundColor =
+      originalChartData.revLabels.map((label) =>
+        getBarColor(label, selectedCategory)
+      );
+    window.catChart1.data.datasets[0].borderColor =
+      originalChartData.revLabels.map((label) =>
+        getBarColor(label, selectedCategory)
+      );
     window.catChart1.update();
   }
 
   // Update Chart 2 (Review)
   if (window.catChart2 && originalChartData.reviewLabels) {
-    const getColors = () => originalChartData.reviewLabels.map(
-      label => getBarColor(label, selectedCategory)
-    );
+    const getColors = () =>
+      originalChartData.reviewLabels.map((label) =>
+        getBarColor(label, selectedCategory)
+      );
     // Update both datasets (stick and dot)
     window.catChart2.data.datasets[0].backgroundColor = getColors();
     window.catChart2.data.datasets[0].borderColor = getColors();
@@ -603,20 +666,23 @@ function updateChartHighlighting() {
 
   // Update Chart 3 (Scatter)
   if (window.catChart3 && originalChartData.scatterData) {
-    window.catChart3.data.datasets[0].backgroundColor = originalChartData.scatterData.map(
-      point => getPointColor(point.label, selectedCategory)
-    );
-    window.catChart3.data.datasets[0].borderColor = originalChartData.scatterData.map(
-      point => getPointColor(point.label, selectedCategory)
-    );
+    window.catChart3.data.datasets[0].backgroundColor =
+      originalChartData.scatterData.map((point) =>
+        getPointColor(point.label, selectedCategory)
+      );
+    window.catChart3.data.datasets[0].borderColor =
+      originalChartData.scatterData.map((point) =>
+        getPointColor(point.label, selectedCategory)
+      );
     window.catChart3.update();
   }
 
   // Update Chart 4 (Cancellation)
   if (window.catChart4) {
-    window.catChart4.data.datasets[0].backgroundColor = originalChartData.cancelLabels.map(label => 
-      getBarColor(label, selectedCategory)
-    );
+    window.catChart4.data.datasets[0].backgroundColor =
+      originalChartData.cancelLabels.map((label) =>
+        getBarColor(label, selectedCategory)
+      );
     window.catChart4.update();
   }
 }
@@ -633,14 +699,14 @@ function setupFilterEvents3(originalData) {
       selectedCategory = null;
 
       // Reset sorting to default (descending)
-      revenueSortOrder = 'desc';
-      reviewSortOrder = 'desc';
-      returnSortOrder = 'desc';
-      
+      revenueSortOrder = "desc";
+      reviewSortOrder = "desc";
+      returnSortOrder = "desc";
+
       // Update button states
-      updateSortButtonStates('revenue', 'desc');
-      updateSortButtonStates('review', 'desc');
-      updateSortButtonStates('return', 'desc');
+      updateSortButtonStates("revenue", "desc");
+      updateSortButtonStates("review", "desc");
+      updateSortButtonStates("return", "desc");
 
       // 🔄 Call the category-related redraw function
       drawCategoryCharts(originalData);
@@ -685,7 +751,9 @@ function showCategoryInsights(data) {
 
   const card0 = document.getElementById("lowest-revenue-card");
   if (card0) {
-    card0.querySelector(".summary-value").textContent = formatCategoryName(lowestRevenue[0]);
+    card0.querySelector(".summary-value").textContent = formatCategoryName(
+      lowestRevenue[0]
+    );
   }
 
   // === Lowest Review Score ===
@@ -713,7 +781,9 @@ function showCategoryInsights(data) {
 
   const card2 = document.getElementById("fastest-growth-card");
   if (card2) {
-    card2.querySelector(".summary-value").textContent = formatCategoryName(fastestGrowing[0]);
+    card2.querySelector(".summary-value").textContent = formatCategoryName(
+      fastestGrowing[0]
+    );
   }
 
   // === Highest Satisfaction ===
@@ -734,58 +804,66 @@ function showCategoryInsights(data) {
 
 // Function to setup sorting event handlers
 function setupSortingEvents() {
-  console.log("🔧 Setting up sorting events with categoryData:", categoryData?.length);
-  
+  console.log(
+    "🔧 Setting up sorting events with categoryData:",
+    categoryData?.length
+  );
+
   // Revenue sorting
   document.getElementById("revenue-sort-asc")?.addEventListener("click", () => {
-    revenueSortOrder = 'asc';
-    updateSortButtonStates('revenue', 'asc');
+    revenueSortOrder = "asc";
+    updateSortButtonStates("revenue", "asc");
     console.log("📊 Redrawing charts with categoryData:", categoryData?.length);
     drawCategoryCharts(categoryData);
   });
 
-  document.getElementById("revenue-sort-desc")?.addEventListener("click", () => {
-    revenueSortOrder = 'desc';
-    updateSortButtonStates('revenue', 'desc');
-    console.log("📊 Redrawing charts with categoryData:", categoryData?.length);
-    drawCategoryCharts(categoryData);
-  });
+  document
+    .getElementById("revenue-sort-desc")
+    ?.addEventListener("click", () => {
+      revenueSortOrder = "desc";
+      updateSortButtonStates("revenue", "desc");
+      console.log(
+        "📊 Redrawing charts with categoryData:",
+        categoryData?.length
+      );
+      drawCategoryCharts(categoryData);
+    });
 
   // Review sorting
   document.getElementById("review-sort-asc")?.addEventListener("click", () => {
-    reviewSortOrder = 'asc';
-    updateSortButtonStates('review', 'asc');
+    reviewSortOrder = "asc";
+    updateSortButtonStates("review", "asc");
     console.log("📊 Redrawing charts with categoryData:", categoryData?.length);
     drawCategoryCharts(categoryData);
   });
 
   document.getElementById("review-sort-desc")?.addEventListener("click", () => {
-    reviewSortOrder = 'desc';
-    updateSortButtonStates('review', 'desc');
+    reviewSortOrder = "desc";
+    updateSortButtonStates("review", "desc");
     console.log("📊 Redrawing charts with categoryData:", categoryData?.length);
     drawCategoryCharts(categoryData);
   });
 
   // Return rate sorting
   document.getElementById("return-sort-asc")?.addEventListener("click", () => {
-    returnSortOrder = 'asc';
-    updateSortButtonStates('return', 'asc');
+    returnSortOrder = "asc";
+    updateSortButtonStates("return", "asc");
     console.log("📊 Redrawing charts with categoryData:", categoryData?.length);
     drawCategoryCharts(categoryData);
   });
 
   document.getElementById("return-sort-desc")?.addEventListener("click", () => {
-    returnSortOrder = 'desc';
-    updateSortButtonStates('return', 'desc');
+    returnSortOrder = "desc";
+    updateSortButtonStates("return", "desc");
     console.log("📊 Redrawing charts with categoryData:", categoryData?.length);
     drawCategoryCharts(categoryData);
   });
 
   // Set initial button states
-  updateSortButtonStates('revenue', revenueSortOrder);
-  updateSortButtonStates('review', reviewSortOrder);
-  updateSortButtonStates('return', returnSortOrder);
-  
+  updateSortButtonStates("revenue", revenueSortOrder);
+  updateSortButtonStates("review", reviewSortOrder);
+  updateSortButtonStates("return", returnSortOrder);
+
   console.log("✅ Sorting events setup complete");
 }
 
@@ -793,9 +871,9 @@ function setupSortingEvents() {
 function updateSortButtonStates(chartType, activeOrder) {
   const ascBtn = document.getElementById(`${chartType}-sort-asc`);
   const descBtn = document.getElementById(`${chartType}-sort-desc`);
-  
+
   if (ascBtn && descBtn) {
-    ascBtn.classList.toggle('active', activeOrder === 'asc');
-    descBtn.classList.toggle('active', activeOrder === 'desc');
+    ascBtn.classList.toggle("active", activeOrder === "asc");
+    descBtn.classList.toggle("active", activeOrder === "desc");
   }
 }
