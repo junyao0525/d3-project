@@ -227,9 +227,21 @@ function drawCategoryCharts(data) {
         },
         tooltip: {
           callbacks: {
+            title: function(tooltipItems) {
+              // Return the formatted category name as the tooltip title
+              if (tooltipItems.length > 0) {
+                const label = tooltipItems[0].label;
+                return formatCategoryName(label);
+              }
+              return '';
+            },
             label: function(context) {
-              const label = this.getLabelForValue(context.parsed.x);
-              return `Revenue: R$${context.parsed.x.toFixed(2)}`;
+              // Return the formatted revenue as the tooltip body
+              const revenue = context.parsed.x;
+              if (revenue !== null) {
+                return `Revenue: R$ ${revenue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+              }
+              return '';
             }
           }
         }
@@ -315,8 +327,19 @@ function drawCategoryCharts(data) {
             return tooltipItem.datasetIndex === 1;
           },
           callbacks: {
+            title: function(tooltipItems) {
+              if (tooltipItems.length > 0) {
+                const label = tooltipItems[0].label;
+                return formatCategoryName(label);
+              }
+              return '';
+            },
             label: function(context) {
-              return `Avg Review: ${context.parsed.x.toFixed(2)}/5`;
+              const score = context.parsed.x;
+              if (score !== null) {
+                return `Avg. Score: ${score.toFixed(2)} / 5`;
+              }
+              return '';
             }
           }
         }
@@ -471,8 +494,19 @@ function drawCategoryCharts(data) {
         },
         tooltip: {
           callbacks: {
+            title: function(tooltipItems) {
+              if (tooltipItems.length > 0) {
+                const label = tooltipItems[0].label;
+                return formatCategoryName(label);
+              }
+              return '';
+            },
             label: function(context) {
-              return `Cancellation Rate: ${context.parsed.x.toFixed(2)}%`;
+              const rate = context.parsed.x;
+              if (rate !== null) {
+                return `Cancellation Rate: ${rate.toFixed(2)}%`;
+              }
+              return '';
             }
           }
         }
