@@ -505,6 +505,7 @@ function drawScatterChart(canvasId, dataPoints, label, color, noteText = null) {
           },
         },
         y: {
+          type: 'logarithmic', // Use a logarithmic scale
           title: {
             display: true,
             text: "Total Revenue (R$)",
@@ -516,7 +517,13 @@ function drawScatterChart(canvasId, dataPoints, label, color, noteText = null) {
             font: {
               size: 10,
             },
-            callback: (v) => `R$ ${(v / 1000).toFixed(0)}k`,
+            // Format ticks for a log scale (e.g., 1k, 10k, 100k)
+            callback: function(value, index, values) {
+              if (value === 1000 || value === 10000 || value === 100000 || value === 1000000) {
+                return `R$ ${(value / 1000)}k`;
+              }
+              return null; // Hide other labels
+            },
           },
           grid: {
             color: "#f0f0f0",
