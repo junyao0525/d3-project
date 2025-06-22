@@ -85,6 +85,10 @@ function populateGeoFilter() {
 let charts = {};
 let selectedState = null; // Keep track of the selected state globally
 
+// Global variables for sorting functionality
+let deliverySortOrder = 'asc'; // Default: ascending (lowest to highest, left to right)
+let satisfactionSortOrder = 'desc'; // Default: descending (highest to lowest, left to right)
+
 function drawCharts(data) {
   const stateAgg = d3.rollups(
     data,
@@ -110,11 +114,42 @@ function drawCharts(data) {
     (d) => d.customer_state
   );
 
+  // Sort delivery data from lower to higher (left to right)
+  const sortedDeliveryAgg = [...stateAgg].sort((a, b) => {
+    if (deliverySortOrder === 'asc') {
+      return a[1].delivery - b[1].delivery; // Ascending (lowest to highest)
+    } else {
+      return b[1].delivery - a[1].delivery; // Descending (highest to lowest)
+    }
+  });
+
+  // Sort satisfaction data from highest to lowest (left to right)
+  const sortedSatisfactionAgg = [...stateAgg].sort((a, b) => {
+    if (satisfactionSortOrder === 'desc') {
+      return b[1].review - a[1].review; // Descending (highest to lowest)
+    } else {
+      return a[1].review - b[1].review; // Ascending (lowest to highest)
+    }
+  });
+
   const labels = stateAgg.map((d) => d[0]);
   const revenue = stateAgg.map((d) => d[1].revenue);
   const delivery = stateAgg.map((d) => d[1].delivery);
   const review = stateAgg.map((d) => d[1].review);
   const freight = stateAgg.map((d) => d[1].freight);
+
+  // Get sorted delivery data
+  const deliveryLabels = sortedDeliveryAgg.map((d) => d[0]);
+  const deliveryValues = sortedDeliveryAgg.map((d) => d[1].delivery);
+
+  // Get sorted satisfaction data
+  const satisfactionLabels = sortedSatisfactionAgg.map((d) => d[0]);
+  const satisfactionValues = sortedSatisfactionAgg.map((d) => d[1].review);
+
+  console.log("📊 Delivery sorting:", deliverySortOrder, "First 3 states:", deliveryLabels.slice(0, 3));
+  console.log("📊 Delivery values (first 3):", deliveryValues.slice(0, 3));
+  console.log("📊 Satisfaction sorting:", satisfactionSortOrder, "First 3 states:", satisfactionLabels.slice(0, 3));
+  console.log("📊 Satisfaction values (first 3):", satisfactionValues.slice(0, 3));
 
   const total = d3.sum(revenue);
   const top5Total = revenue
@@ -136,21 +171,19 @@ function drawCharts(data) {
 
   charts.deliveryTimeByState = drawBarChart(
     "deliveryTimeByState",
-    labels,
-    delivery,
+    deliveryLabels,
+    deliveryValues,
     "Avg Delivery Time (days)",
-    "#0ea5e9",
-    `Fastest avg delivery: ${Math.min(...delivery).toFixed(1)} days`
+    "#0ea5e9"
   );
 
   // CHANGED: Use lollipop chart for review scores
   charts.reviewScoreByState = drawLollipopChart(
     "reviewScoreByState",
-    labels,
-    review,
+    satisfactionLabels,
+    satisfactionValues,
     "Avg Review Score",
-    "#0ea5e9",
-    `Highest satisfaction: ${Math.max(...review).toFixed(1)} ★`
+    "#0ea5e9"
   );
 
   charts.freightVsRevenue = drawScatterChart(
@@ -162,7 +195,7 @@ function drawCharts(data) {
   );
 }
 
-function drawBarChart(canvasId, labels, values, label, color, noteText = null) {
+function drawBarChart(canvasId, labels, values, label, color) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) {
     console.warn(`Canvas not found: #${canvasId}`);
@@ -176,12 +209,6 @@ function drawBarChart(canvasId, labels, values, label, color, noteText = null) {
   }
 
   if (charts[canvasId]) charts[canvasId].destroy();
-
-  // Set chart note if provided
-  const note = canvas.parentElement?.querySelector(".chart-note");
-  if (note && noteText) {
-    note.textContent = noteText;
-  }
 
   if (canvasId === 'reviewScoreByState') {
     return new Chart(ctx, {
@@ -217,6 +244,10 @@ function drawBarChart(canvasId, labels, values, label, color, noteText = null) {
             }
           },
           x: {
+            title: {
+              display: true,
+              text: 'State'
+            },
             grid: {
               display: false
             }
@@ -283,7 +314,7 @@ function drawBarChart(canvasId, labels, values, label, color, noteText = null) {
       },
       layout: {
         padding: {
-          left: 10,
+          left: 0,
           right: 10,
           top: 10,
           bottom: 10,
@@ -291,6 +322,10 @@ function drawBarChart(canvasId, labels, values, label, color, noteText = null) {
       },
       scales: {
         x: {
+          title: {
+            display: true,
+            text: 'State'
+          },
           ticks: {
             maxRotation: 45,
             minRotation: 0,
@@ -318,7 +353,14 @@ function drawBarChart(canvasId, labels, values, label, color, noteText = null) {
             font: {
               size: 10,
             },
-            padding: 5,
+            layout: {
+              padding: {
+                left: 0,
+                right: 10,
+                top: 10,
+                bottom: 10,
+              },
+            },
           },
           grid: {
             color: "#f0f0f0",
@@ -330,7 +372,7 @@ function drawBarChart(canvasId, labels, values, label, color, noteText = null) {
 }
 
 // NEW FUNCTION: Lollipop chart for review scores
-function drawLollipopChart(canvasId, labels, values, label, color, noteText = null) {
+function drawLollipopChart(canvasId, labels, values, label, color) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) {
     console.warn(`Canvas not found: #${canvasId}`);
@@ -344,11 +386,6 @@ function drawLollipopChart(canvasId, labels, values, label, color, noteText = nu
   }
 
   if (charts[canvasId]) charts[canvasId].destroy();
-
-  const note = canvas.parentElement?.querySelector(".chart-note");
-  if (note && noteText) {
-    note.textContent = noteText;
-  }
 
   return new Chart(ctx, {
     type: 'bar', // Use 'bar' type as the base
@@ -375,6 +412,14 @@ function drawLollipopChart(canvasId, labels, values, label, color, noteText = nu
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      layout: {
+        padding: {
+          left: 0,
+          right: 10,
+          top: 10,
+          bottom: 10,
+        },
+      },
       scales: {
         y: {
           beginAtZero: true,
@@ -385,6 +430,10 @@ function drawLollipopChart(canvasId, labels, values, label, color, noteText = nu
           }
         },
         x: {
+          title: {
+            display: true,
+            text: 'State'
+          },
           grid: {
             display: false
           },
@@ -479,7 +528,7 @@ function drawScatterChart(canvasId, dataPoints, label, color, noteText = null) {
       },
       layout: {
         padding: {
-          left: 10,
+          left: 0,
           right: 10,
           top: 10,
           bottom: 10,
@@ -625,6 +674,9 @@ function setupFilterEvents(data) {
   resetBtn.addEventListener("click", () => {
     handleStateSelection(null);
   });
+
+  // Setup sorting event handlers
+  setupSortingEvents();
 }
 
 // === STEP 6: Trend Function ===
@@ -1079,4 +1131,84 @@ function updateMapStyles(selectedState) {
       console.log(abbr, selectedState);
       return !selectedState || selectedState === abbr ? 1 : 0.5;
     });
+
+  console.log("✅ Map styles updated for selected state:", selectedState);
+}
+
+// Function to setup sorting event handlers
+function setupSortingEvents() {
+  console.log("🔧 Setting up sorting events...");
+  
+  // Delivery sorting
+  const deliveryAscBtn = document.getElementById("delivery-sort-asc");
+  const deliveryDescBtn = document.getElementById("delivery-sort-desc");
+  
+  if (deliveryAscBtn) {
+    deliveryAscBtn.addEventListener("click", () => {
+      console.log("🔄 Sorting delivery: ASC (lowest to highest, left to right)");
+      deliverySortOrder = 'asc';
+      updateSortButtonStates('delivery', 'asc');
+      console.log("📊 Redrawing charts with allData:", allData?.length || 'undefined');
+      drawCharts(allData);
+    });
+  } else {
+    console.warn("⚠️ Delivery ASC button not found");
+  }
+
+  if (deliveryDescBtn) {
+    deliveryDescBtn.addEventListener("click", () => {
+      console.log("🔄 Sorting delivery: DESC (highest to lowest, left to right)");
+      deliverySortOrder = 'desc';
+      updateSortButtonStates('delivery', 'desc');
+      console.log("📊 Redrawing charts with allData:", allData?.length || 'undefined');
+      drawCharts(allData);
+    });
+  } else {
+    console.warn("⚠️ Delivery DESC button not found");
+  }
+
+  // Satisfaction sorting
+  const satisfactionAscBtn = document.getElementById("satisfaction-sort-asc");
+  const satisfactionDescBtn = document.getElementById("satisfaction-sort-desc");
+  
+  if (satisfactionAscBtn) {
+    satisfactionAscBtn.addEventListener("click", () => {
+      console.log("🔄 Sorting satisfaction: ASC (lowest to highest, left to right)");
+      satisfactionSortOrder = 'asc';
+      updateSortButtonStates('satisfaction', 'asc');
+      console.log("📊 Redrawing charts with allData:", allData?.length || 'undefined');
+      drawCharts(allData);
+    });
+  } else {
+    console.warn("⚠️ Satisfaction ASC button not found");
+  }
+
+  if (satisfactionDescBtn) {
+    satisfactionDescBtn.addEventListener("click", () => {
+      console.log("🔄 Sorting satisfaction: DESC (highest to lowest, left to right)");
+      satisfactionSortOrder = 'desc';
+      updateSortButtonStates('satisfaction', 'desc');
+      console.log("📊 Redrawing charts with allData:", allData?.length || 'undefined');
+      drawCharts(allData);
+    });
+  } else {
+    console.warn("⚠️ Satisfaction DESC button not found");
+  }
+
+  // Set initial button states
+  updateSortButtonStates('delivery', deliverySortOrder);
+  updateSortButtonStates('satisfaction', satisfactionSortOrder);
+  
+  console.log("✅ Sorting events setup complete");
+}
+
+// Function to update sort button visual states
+function updateSortButtonStates(chartType, activeOrder) {
+  const ascBtn = document.getElementById(`${chartType}-sort-asc`);
+  const descBtn = document.getElementById(`${chartType}-sort-desc`);
+  
+  if (ascBtn && descBtn) {
+    ascBtn.classList.toggle('active', activeOrder === 'asc');
+    descBtn.classList.toggle('active', activeOrder === 'desc');
+  }
 }

@@ -210,13 +210,11 @@
                 <div class="chart-container">
                   <div class="chart-title">Delivery Efficiency</div>
                   <canvas id="deliveryTimeByState" height="400"></canvas>
-                  <div class="chart-note">Loading ...</div>
                 </div>
 
                 <div class="chart-container">
                   <div class="chart-title">Customer Satisfaction Scores</div>
                   <canvas id="reviewScoreByState" height="400"></canvas>
-                  <div class="chart-note">Loading ...</div>
                 </div>
 
                 <div class="chart-container">
@@ -234,13 +232,25 @@
           <div class="dashboard-content">
             <div class="dashboard-grid">
               <div class="chart-container">
-                <div class="chart-title">Revenue Distribution by Category</div>
+                <div class="chart-title">
+                  Revenue Distribution by Category
+                  <div class="sort-controls">
+                    <button class="sort-btn" id="revenue-sort-asc" title="Sort Ascending">↑</button>
+                    <button class="sort-btn" id="revenue-sort-desc" title="Sort Descending">↓</button>
+                  </div>
+                </div>
                 <canvas id="revenueByCategory"></canvas>
                 <div class="chart-note">Loading ...</div>
               </div>
 
               <div class="chart-container">
-                <div class="chart-title">Customer Satisfaction Scores</div>
+                <div class="chart-title">
+                  Customer Satisfaction Scores
+                  <div class="sort-controls">
+                    <button class="sort-btn" id="review-sort-asc" title="Sort Ascending">↑</button>
+                    <button class="sort-btn" id="review-sort-desc" title="Sort Descending">↓</button>
+                  </div>
+                </div>
                 <canvas id="reviewByCategory"></canvas>
                 <div class="chart-note">Loading ...</div>
               </div>
@@ -252,7 +262,13 @@
               </div>
 
               <div class="chart-container">
-                <div class="chart-title">Return Rates by Category</div>
+                <div class="chart-title">
+                  Return Rates by Category
+                  <div class="sort-controls">
+                    <button class="sort-btn" id="return-sort-asc" title="Sort Ascending">↑</button>
+                    <button class="sort-btn" id="return-sort-desc" title="Sort Descending">↓</button>
+                  </div>
+                </div>
                 <canvas id="returnByCategory"></canvas>
                 <div class="chart-note">Loading ...</div>
               </div>
