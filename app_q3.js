@@ -3,6 +3,7 @@
 // Global variables for highlighting functionality
 let selectedCategory = null;
 let originalChartData = {};
+let categoryData = null; // Store the full dataset locally for category charts
 
 // Global variables for sorting functionality
 let revenueSortOrder = 'desc'; // Default: descending (highest first)
@@ -13,15 +14,15 @@ d3.csv("olist_dataset.csv").then((data) => {
   preprocess(data);
   drawCategoryAnalysis(data);
   setupFilterEvents3(data);
-  setupSortingEvents(data);
+  setupSortingEvents();
   setTimeout(() => {
     showCategoryInsights(data);
   }, 0);
 });
 
 function drawCategoryAnalysis(data) {
-  // Store data globally for access in toggleCategorySelection
-  window.allData = data;
+  // Store data locally for access in toggleCategorySelection
+  categoryData = data;
   
   const categories = Array.from(
     new Set(data.map((d) => d.product_category_name))
@@ -64,6 +65,14 @@ function drawCategoryCharts(data) {
   ["catChart1", "catChart2", "catChart3", "catChart4"].forEach((id) => {
     if (window[id]) window[id].destroy();
   });
+
+  // Check if data is valid
+  if (!data || !Array.isArray(data) || data.length === 0) {
+    console.error("❌ Invalid data passed to drawCategoryCharts:", data);
+    return;
+  }
+
+  console.log("📊 drawCategoryCharts called with data length:", data.length);
 
   // === Aggregations ===
   const catAgg = d3
@@ -485,8 +494,14 @@ function toggleCategorySelection(category) {
     selectedCategory = category;
   }
   
+  // Check if we have valid data before redrawing
+  if (!categoryData || !Array.isArray(categoryData) || categoryData.length === 0) {
+    console.error("❌ No valid data available for chart redraw");
+    return;
+  }
+  
   // Redraw all charts to include the selected category if it's not in top 10
-  drawCategoryCharts(window.allData || []);
+  drawCategoryCharts(categoryData);
   
   // Update highlighting for existing charts
   updateChartHighlighting();
@@ -650,50 +665,60 @@ function showCategoryInsights(data) {
 }
 
 // Function to setup sorting event handlers
-function setupSortingEvents(data) {
+function setupSortingEvents() {
+  console.log("🔧 Setting up sorting events with categoryData:", categoryData?.length);
+  
   // Revenue sorting
-  document.getElementById("revenue-sort-asc").addEventListener("click", () => {
+  document.getElementById("revenue-sort-asc")?.addEventListener("click", () => {
     revenueSortOrder = 'asc';
     updateSortButtonStates('revenue', 'asc');
-    drawCategoryCharts(data);
+    console.log("📊 Redrawing charts with categoryData:", categoryData?.length);
+    drawCategoryCharts(categoryData);
   });
 
-  document.getElementById("revenue-sort-desc").addEventListener("click", () => {
+  document.getElementById("revenue-sort-desc")?.addEventListener("click", () => {
     revenueSortOrder = 'desc';
     updateSortButtonStates('revenue', 'desc');
-    drawCategoryCharts(data);
+    console.log("📊 Redrawing charts with categoryData:", categoryData?.length);
+    drawCategoryCharts(categoryData);
   });
 
   // Review sorting
-  document.getElementById("review-sort-asc").addEventListener("click", () => {
+  document.getElementById("review-sort-asc")?.addEventListener("click", () => {
     reviewSortOrder = 'asc';
     updateSortButtonStates('review', 'asc');
-    drawCategoryCharts(data);
+    console.log("📊 Redrawing charts with categoryData:", categoryData?.length);
+    drawCategoryCharts(categoryData);
   });
 
-  document.getElementById("review-sort-desc").addEventListener("click", () => {
+  document.getElementById("review-sort-desc")?.addEventListener("click", () => {
     reviewSortOrder = 'desc';
     updateSortButtonStates('review', 'desc');
-    drawCategoryCharts(data);
+    console.log("📊 Redrawing charts with categoryData:", categoryData?.length);
+    drawCategoryCharts(categoryData);
   });
 
   // Return rate sorting
-  document.getElementById("return-sort-asc").addEventListener("click", () => {
+  document.getElementById("return-sort-asc")?.addEventListener("click", () => {
     returnSortOrder = 'asc';
     updateSortButtonStates('return', 'asc');
-    drawCategoryCharts(data);
+    console.log("📊 Redrawing charts with categoryData:", categoryData?.length);
+    drawCategoryCharts(categoryData);
   });
 
-  document.getElementById("return-sort-desc").addEventListener("click", () => {
+  document.getElementById("return-sort-desc")?.addEventListener("click", () => {
     returnSortOrder = 'desc';
     updateSortButtonStates('return', 'desc');
-    drawCategoryCharts(data);
+    console.log("📊 Redrawing charts with categoryData:", categoryData?.length);
+    drawCategoryCharts(categoryData);
   });
 
   // Set initial button states
   updateSortButtonStates('revenue', revenueSortOrder);
   updateSortButtonStates('review', reviewSortOrder);
   updateSortButtonStates('return', returnSortOrder);
+  
+  console.log("✅ Sorting events setup complete");
 }
 
 // Function to update sort button visual states
