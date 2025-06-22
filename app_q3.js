@@ -10,6 +10,15 @@ let revenueSortOrder = 'desc'; // Default: descending (highest first)
 let reviewSortOrder = 'desc';  // Default: descending (highest first)
 let returnSortOrder = 'desc';  // Default: descending (highest first)
 
+
+function formatCategoryName(name) {
+  if (!name || typeof name !== 'string') return '';
+  return name
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
 d3.csv("olist_dataset.csv").then((data) => {
   preprocess(data);
   drawCategoryAnalysis(data);
@@ -25,8 +34,8 @@ function drawCategoryAnalysis(data) {
   categoryData = data;
   
   const categories = Array.from(
-    new Set(data.map((d) => d.product_category_name))
-  );
+    new Set(data.map((d) => d.product_category_name_english)) // Use English name
+  ).filter(Boolean); // Remove any null/undefined entries
 
   // === Filter Dropdown ===
   const select = document.getElementById("category-filter");
@@ -34,17 +43,17 @@ function drawCategoryAnalysis(data) {
   // Clear existing options first
   select.innerHTML = '<option value="">All Categories</option>';
 
-  categories.forEach((cat) => {
+  categories.sort().forEach((cat) => { // Sort categories alphabetically
     const opt = document.createElement("option");
     opt.value = cat;
-    opt.textContent = cat;
+    opt.textContent = formatCategoryName(cat); // Format for display
     select.appendChild(opt);
   });
 
   select.addEventListener("change", () => {
     const val = select.value;
     const filtered = val
-      ? data.filter((d) => d.product_category_name === val)
+      ? data.filter((d) => d.product_category_name_english === val) // Use English name
       : data;
     document.getElementById("category-filter-display").textContent =
       val || "All categories";
@@ -53,11 +62,11 @@ function drawCategoryAnalysis(data) {
     selectedCategory = null;
     
     drawCategoryCharts(filtered);
-    showCategoryInsights(filtered); // ✅ Now passing correct filtered data
+    showCategoryInsights(filtered);
   });
 
   drawCategoryCharts(data);
-  showCategoryInsights(data); // ✅ Fixed: was calling with undefined 'filtered'
+  showCategoryInsights(data);
 }
 
 function drawCategoryCharts(data) {
@@ -84,7 +93,7 @@ function drawCategoryCharts(data) {
         cancelRate:
           v.filter((d) => d.order_status !== "delivered").length / v.length,
       }),
-      (d) => d.product_category_name
+      (d) => d.product_category_name_english
     )
     .filter(([k, v]) => k && v.totalRevenue > 0);
 
@@ -181,7 +190,7 @@ function drawCategoryCharts(data) {
       responsive: true, 
       indexAxis: 'y',
       scales: { 
-        x: {
+        x: { // Value Axis
           beginAtZero: true,
           title: {
             display: true,
@@ -193,9 +202,15 @@ function drawCategoryCharts(data) {
             }
           }
         },
-        y: {
+        y: { // Category Axis
           grid: {
             display: false
+          },
+          ticks: {
+            callback: function(value) { // 'value' is the index
+              const label = this.getLabelForValue(value);
+              return formatCategoryName(label);
+            }
           }
         }
       },
@@ -213,6 +228,7 @@ function drawCategoryCharts(data) {
         tooltip: {
           callbacks: {
             label: function(context) {
+              const label = this.getLabelForValue(context.parsed.x);
               return `Revenue: R$${context.parsed.x.toFixed(2)}`;
             }
           }
@@ -224,7 +240,7 @@ function drawCategoryCharts(data) {
     .querySelector("#revenueByCategory")
     .parentElement.querySelector(
       ".chart-note"
-    ).textContent = `${topRevCat[0]} accounts for ${revenuePct}% of total revenue (${revenueSortOrder === 'desc' ? 'Highest' : 'Lowest'} first)`;
+    ).textContent = `${formatCategoryName(topRevCat[0])} accounts for ${revenuePct}% of total revenue (${revenueSortOrder === 'desc' ? 'Highest' : 'Lowest'} first)`;
 
   // === Chart 2: Avg Review Score (Lollipop) ===
   const reviewLabels = reviewData.map((d) => d[0]);
@@ -261,7 +277,7 @@ function drawCategoryCharts(data) {
       responsive: true,
       indexAxis: 'y',
       scales: { 
-        x: {
+        x: { // Value Axis
           beginAtZero: true, 
           max: 5,
           title: {
@@ -269,9 +285,15 @@ function drawCategoryCharts(data) {
             text: 'Average Score (out of 5)'
           }
         },
-        y: {
+        y: { // Category Axis
           grid: {
             display: false
+          },
+          ticks: {
+            callback: function(value) {
+              const label = this.getLabelForValue(value);
+              return formatCategoryName(label);
+            }
           }
         }
       },
@@ -304,7 +326,7 @@ function drawCategoryCharts(data) {
   document
     .querySelector("#reviewByCategory")
     .parentElement.querySelector(".chart-note").textContent = `${
-    bestReviewCat[0]
+    formatCategoryName(bestReviewCat[0])
   } has the ${reviewSortOrder === 'desc' ? 'highest' : 'lowest'} satisfaction with ${bestReviewCat[1].avgReview.toFixed(
     2
   )} stars (${reviewSortOrder === 'desc' ? 'Highest' : 'Lowest'} first)`;
@@ -350,7 +372,7 @@ function drawCategoryCharts(data) {
         tooltip: {
           callbacks: {
             label: (ctx) =>
-              `${ctx.raw.label}: R$${ctx.raw.y.toFixed(
+              `${formatCategoryName(ctx.raw.label)}: R$${ctx.raw.y.toFixed(
                 2
               )}, Score: ${ctx.raw.x.toFixed(2)}`,
           },
@@ -361,7 +383,13 @@ function drawCategoryCharts(data) {
           min: 0,
           max: 5,
           suggestedMin: 2.5,
-          title: { display: true, text: "Avg Review Score" }
+          title: { display: true, text: "Avg Review Score" },
+          ticks: {
+            callback: function(value) {
+              const label = this.getLabelForValue(value);
+              return formatCategoryName(label);
+            }
+          }
         },
         y: {
           title: { display: true, text: "Revenue (R$)" },
@@ -384,7 +412,7 @@ function drawCategoryCharts(data) {
   document
     .querySelector("#scatterRevenueReview")
     .parentElement.querySelector(".chart-note").textContent = quadrantWinner
-    ? `${quadrantWinner.label} shows strong growth in both revenue and satisfaction`
+    ? `${formatCategoryName(quadrantWinner.label)} shows strong growth in both revenue and satisfaction`
     : "No standout category in both metrics";
 
   // === Chart 4: Return Rates by Category ===
@@ -428,6 +456,12 @@ function drawCategoryCharts(data) {
         y: { // Category axis
           grid: {
             display: false
+          },
+          ticks: {
+            callback: function(value) {
+              const label = this.getLabelForValue(value);
+              return formatCategoryName(label);
+            }
           }
         }
       },
@@ -448,7 +482,7 @@ function drawCategoryCharts(data) {
   document
     .querySelector("#returnByCategory")
     .parentElement.querySelector(".chart-note").textContent = `${
-    worstCancelCat[0]
+    formatCategoryName(worstCancelCat[0])
   } has the ${returnSortOrder === 'desc' ? 'highest' : 'lowest'} return rate at ${(
     worstCancelCat[1].cancelRate * 100
   ).toFixed(1)}% (${returnSortOrder === 'desc' ? 'Highest' : 'Lowest'} first)`;
@@ -595,9 +629,9 @@ function showCategoryInsights(data) {
         totalRevenue: d3.sum(v, (d) => +d.payment_value || 0),
         avgReview: d3.mean(v, (d) => +d.review_score || 0),
         count: v.length,
-        category: v[0]?.product_category_name,
+        category: v[0]?.product_category_name_english, // Use English name
       }),
-      (d) => d.product_category_name
+      (d) => d.product_category_name_english // Use English name
     )
     .filter(([k, v]) => k && k.trim() && v.totalRevenue > 0);
 
@@ -613,11 +647,11 @@ function showCategoryInsights(data) {
   const lowestRevenue = catAgg.reduce((a, b) =>
     a[1].totalRevenue < b[1].totalRevenue ? a : b
   );
-  console.log("💸 Lowest Revenue:", lowestRevenue);
+  console.log("💸 Lowest Revenue:", formatCategoryName(lowestRevenue[0]));
 
   const card0 = document.getElementById("lowest-revenue-card");
   if (card0) {
-    card0.querySelector(".summary-value").textContent = lowestRevenue[0];
+    card0.querySelector(".summary-value").textContent = formatCategoryName(lowestRevenue[0]);
   }
 
   // === Lowest Review Score ===
@@ -645,7 +679,7 @@ function showCategoryInsights(data) {
 
   const card2 = document.getElementById("fastest-growth-card");
   if (card2) {
-    card2.querySelector(".summary-value").textContent = fastestGrowing[0];
+    card2.querySelector(".summary-value").textContent = formatCategoryName(fastestGrowing[0]);
   }
 
   // === Highest Satisfaction ===
