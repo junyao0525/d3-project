@@ -262,6 +262,9 @@ function drawBarChart(canvasId, labels, values, label, color) {
         },
         plugins: {
           legend: { display: false },
+          datalabels: {
+            display: false
+          },
           tooltip: {
             filter: function(tooltipItem) {
               return tooltipItem.datasetIndex === 1;
@@ -299,6 +302,9 @@ function drawBarChart(canvasId, labels, values, label, color) {
       },
       plugins: {
         legend: { display: false },
+        datalabels: {
+          display: false
+        },
         tooltip: {
           callbacks: {
             label: (ctx) => {
@@ -455,6 +461,9 @@ function drawLollipopChart(canvasId, labels, values, label, color) {
       },
       plugins: {
         legend: { display: false },
+        datalabels: {
+          display: false
+        },
         tooltip: {
           filter: (tooltipItem) => tooltipItem.datasetIndex === 1,
           callbacks: {
@@ -512,6 +521,9 @@ function drawScatterChart(canvasId, dataPoints, label, color, noteText = null) {
       },
       plugins: {
         legend: { display: false },
+        datalabels: {
+          display: false
+        },
         tooltip: {
           callbacks: {
             title: (items) => items[0].raw.label,

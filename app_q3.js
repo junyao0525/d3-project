@@ -1,5 +1,8 @@
 // Fixed version of your JavaScript functions
 
+// Register Chart.js datalabels plugin
+Chart.register(ChartDataLabels);
+
 // Global variables for highlighting functionality
 let selectedCategory = null;
 let originalChartData = {};
@@ -275,6 +278,20 @@ function drawCategoryCharts(data) {
             },
           },
         },
+        datalabels: {
+          display: true,
+          color: '#fff',
+          anchor: 'center',
+          align: 'center',
+          clamp: true,
+          font: {
+            weight: 'bold',
+            size: 11
+          },
+          formatter: function(value) {
+            return `R$ ${(value / 1000).toFixed(0)}k`;
+          }
+        }
       },
     },
   });
@@ -387,6 +404,9 @@ function drawCategoryCharts(data) {
             },
           },
         },
+        datalabels: {
+          display: false
+        }
       },
     },
   });
@@ -450,6 +470,9 @@ function drawCategoryCharts(data) {
               )}, Score: ${ctx.raw.x.toFixed(2)}`,
           },
         },
+        datalabels: {
+          display: false
+        }
       },
       scales: {
         x: {
@@ -563,6 +586,20 @@ function drawCategoryCharts(data) {
             },
           },
         },
+        datalabels: {
+          display: true,
+          color: '#000',
+          anchor: 'end',
+          align: 'right',
+          offset: 4,
+          font: {
+            size: 11,
+            weight: 'bold'
+          },
+          formatter: function(value) {
+            return value.toFixed(1) + '%';
+          }
+        }
       },
     },
   });
