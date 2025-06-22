@@ -4,7 +4,7 @@
 let selectedCategory = null;
 let originalChartData = {};
 
-d3.csv("olist_combined_clean_3.csv").then((data) => {
+d3.csv("olist_dataset.csv").then((data) => {
   preprocess(data);
   drawCategoryAnalysis(data);
   setupFilterEvents3(data);
@@ -14,6 +14,9 @@ d3.csv("olist_combined_clean_3.csv").then((data) => {
 });
 
 function drawCategoryAnalysis(data) {
+  // Store data globally for access in toggleCategorySelection
+  window.allData = data;
+  
   const categories = Array.from(
     new Set(data.map((d) => d.product_category_name))
   );
@@ -72,6 +75,8 @@ function drawCategoryCharts(data) {
 
   // === Derived Metrics ===
   const totalRevenue = d3.sum(catAgg, ([_, v]) => v.totalRevenue);
+  
+  // Get top 10 for each metric
   const topRevenue = catAgg
     .sort((a, b) => d3.descending(a[1].totalRevenue, b[1].totalRevenue))
     .slice(0, 10);
@@ -82,10 +87,50 @@ function drawCategoryCharts(data) {
     .sort((a, b) => d3.descending(a[1].cancelRate, b[1].cancelRate))
     .slice(0, 10);
 
+  // Function to get chart data including selected category if not in top 10
+  function getChartData(topData, selectedCategory) {
+    if (!selectedCategory) {
+      return topData;
+    }
+    
+    // Check if selected category is already in top data
+    const isInTop = topData.some(([cat, _]) => cat === selectedCategory);
+    
+    if (isInTop) {
+      return topData;
+    }
+    
+    // Find the selected category data
+    const selectedData = catAgg.find(([cat, _]) => cat === selectedCategory);
+    
+    if (!selectedData) {
+      return topData;
+    }
+    
+    // Add selected category to the data and sort appropriately
+    const combinedData = [...topData, selectedData];
+    
+    // Sort based on the metric (revenue, review, or cancel rate)
+    if (topData === topRevenue) {
+      return combinedData.sort((a, b) => d3.descending(a[1].totalRevenue, b[1].totalRevenue));
+    } else if (topData === topReview) {
+      return combinedData.sort((a, b) => d3.descending(a[1].avgReview, b[1].avgReview));
+    } else if (topData === topCancel) {
+      return combinedData.sort((a, b) => d3.descending(a[1].cancelRate, b[1].cancelRate));
+    }
+    
+    return combinedData;
+  }
+
+  // Get chart data with selected category included if necessary
+  const revenueData = getChartData(topRevenue, selectedCategory);
+  const reviewData = getChartData(topReview, selectedCategory);
+  const cancelData = getChartData(topCancel, selectedCategory);
+
   // === Chart 1: Revenue by Category ===
-  const revLabels = topRevenue.map((d) => d[0]);
-  const revValues = topRevenue.map((d) => d[1].totalRevenue);
-  const topRevCat = topRevenue[0];
+  const revLabels = revenueData.map((d) => d[0]);
+  const revValues = revenueData.map((d) => d[1].totalRevenue);
+  const topRevCat = revenueData[0];
   const revenuePct = ((topRevCat[1].totalRevenue / totalRevenue) * 100).toFixed(
     1
   );
@@ -107,7 +152,21 @@ function drawCategoryCharts(data) {
     },
     options: { 
       responsive: true, 
-      scales: { y: { beginAtZero: true } },
+      indexAxis: 'y',
+      scales: { 
+        x: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: 'Revenue (R$)'
+          }
+        },
+        y: {
+          grid: {
+            display: false
+          }
+        }
+      },
       onClick: (event, elements) => {
         if (elements.length > 0) {
           const clickedIndex = elements[0].index;
@@ -122,7 +181,7 @@ function drawCategoryCharts(data) {
         tooltip: {
           callbacks: {
             label: function(context) {
-              return `Revenue: R$${context.parsed.y.toFixed(2)}`;
+              return `Revenue: R$${context.parsed.x.toFixed(2)}`;
             }
           }
         }
@@ -135,10 +194,10 @@ function drawCategoryCharts(data) {
       ".chart-note"
     ).textContent = `${topRevCat[0]} accounts for ${revenuePct}% of total revenue`;
 
-  // === Chart 2: Avg Review Score ===
-  const reviewLabels = topReview.map((d) => d[0]);
-  const reviewValues = topReview.map((d) => d[1].avgReview);
-  const bestReviewCat = topReview[0];
+  // === Chart 2: Avg Review Score (Lollipop) ===
+  const reviewLabels = reviewData.map((d) => d[0]);
+  const reviewValues = reviewData.map((d) => d[1].avgReview);
+  const bestReviewCat = reviewData[0];
 
   const reviewCtx = document
     .getElementById("reviewByCategory")
@@ -153,15 +212,40 @@ function drawCategoryCharts(data) {
           data: reviewValues,
           backgroundColor: reviewLabels.map(label => getBarColor(label, selectedCategory)),
           borderColor: reviewLabels.map(label => getBarColor(label, selectedCategory)),
-          borderWidth: 1
+          barThickness: 4, // This makes the bar look like a stick
         },
+        {
+          label: 'Avg Review Score dot',
+          data: reviewValues,
+          type: 'scatter',
+          backgroundColor: reviewLabels.map(label => getBarColor(label, selectedCategory)),
+          borderColor: reviewLabels.map(label => getBarColor(label, selectedCategory)),
+          radius: 8,
+          hoverRadius: 8
+        }
       ],
     },
     options: {
       responsive: true,
-      scales: { y: { beginAtZero: true, max: 5 } },
+      indexAxis: 'y',
+      scales: { 
+        x: {
+          beginAtZero: true, 
+          max: 5,
+          title: {
+            display: true,
+            text: 'Average Score (out of 5)'
+          }
+        },
+        y: {
+          grid: {
+            display: false
+          }
+        }
+      },
       onClick: (event, elements) => {
         if (elements.length > 0) {
+          // elements can be from either dataset, we just need the index
           const clickedIndex = elements[0].index;
           const clickedCategory = reviewLabels[clickedIndex];
           toggleCategorySelection(clickedCategory);
@@ -172,9 +256,13 @@ function drawCategoryCharts(data) {
           display: false
         },
         tooltip: {
+          // Only show tooltips for the scatter plot points (the lollipop head)
+          filter: function(tooltipItem) {
+            return tooltipItem.datasetIndex === 1;
+          },
           callbacks: {
             label: function(context) {
-              return `Avg Review: ${context.parsed.y.toFixed(2)}/5`;
+              return `Avg Review: ${context.parsed.x.toFixed(2)}/5`;
             }
           }
         }
@@ -238,9 +326,10 @@ function drawCategoryCharts(data) {
       },
       scales: {
         x: {
-          title: { display: true, text: "Avg Review Score" },
           min: 0,
           max: 5,
+          suggestedMin: 2.5,
+          title: { display: true, text: "Avg Review Score" }
         },
         y: {
           title: { display: true, text: "Revenue (R$)" },
@@ -261,10 +350,10 @@ function drawCategoryCharts(data) {
     ? `${quadrantWinner.label} shows strong growth in both revenue and satisfaction`
     : "No standout category in both metrics";
 
-  // === Chart 4: Cancellation Rate ===
-  const cancelLabels = topCancel.map((d) => d[0]);
-  const cancelRates = topCancel.map((d) => (d[1].cancelRate * 100).toFixed(2));
-  const worstCancelCat = topCancel[0];
+  // === Chart 4: Return Rates by Category ===
+  const cancelLabels = cancelData.map((d) => d[0]);
+  const cancelRates = cancelData.map((d) => (d[1].cancelRate * 100));
+  const worstCancelCat = cancelData[0];
 
   const cancelCtx = document
     .getElementById("returnByCategory")
@@ -277,15 +366,13 @@ function drawCategoryCharts(data) {
         {
           label: "Cancellation Rate (%)",
           data: cancelRates,
-          backgroundColor: cancelLabels.map(label => getBarColor(label, selectedCategory)),
-          borderColor: cancelLabels.map(label => getBarColor(label, selectedCategory)),
-          borderWidth: 1
+          backgroundColor: "#f59e0b", // Orange color
         },
       ],
     },
     options: {
       responsive: true,
-      scales: { y: { beginAtZero: true, max: 100 } },
+      indexAxis: 'y', // Make it horizontal
       onClick: (event, elements) => {
         if (elements.length > 0) {
           const clickedIndex = elements[0].index;
@@ -293,14 +380,28 @@ function drawCategoryCharts(data) {
           toggleCategorySelection(clickedCategory);
         }
       },
+      scales: {
+        x: { // Value axis
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: 'Cancellation Rate (%)'
+          }
+        },
+        y: { // Category axis
+          grid: {
+            display: false
+          }
+        }
+      },
       plugins: {
         legend: {
-          display: false
+          display: false // Hide legend for single-dataset chart
         },
         tooltip: {
           callbacks: {
             label: function(context) {
-              return `Cancellation Rate: ${context.parsed.y}%`;
+              return `Cancellation Rate: ${context.parsed.x.toFixed(2)}%`;
             }
           }
         }
@@ -356,7 +457,10 @@ function toggleCategorySelection(category) {
     selectedCategory = category;
   }
   
-  // Update all charts with new highlighting
+  // Redraw all charts to include the selected category if it's not in top 10
+  drawCategoryCharts(window.allData || []);
+  
+  // Update highlighting for existing charts
   updateChartHighlighting();
 }
 
@@ -375,12 +479,14 @@ function updateChartHighlighting() {
 
   // Update Chart 2 (Review)
   if (window.catChart2 && originalChartData.reviewLabels) {
-    window.catChart2.data.datasets[0].backgroundColor = originalChartData.reviewLabels.map(
+    const getColors = () => originalChartData.reviewLabels.map(
       label => getBarColor(label, selectedCategory)
     );
-    window.catChart2.data.datasets[0].borderColor = originalChartData.reviewLabels.map(
-      label => getBarColor(label, selectedCategory)
-    );
+    // Update both datasets (stick and dot)
+    window.catChart2.data.datasets[0].backgroundColor = getColors();
+    window.catChart2.data.datasets[0].borderColor = getColors();
+    window.catChart2.data.datasets[1].backgroundColor = getColors();
+    window.catChart2.data.datasets[1].borderColor = getColors();
     window.catChart2.update();
   }
 
@@ -396,12 +502,9 @@ function updateChartHighlighting() {
   }
 
   // Update Chart 4 (Cancellation)
-  if (window.catChart4 && originalChartData.cancelLabels) {
-    window.catChart4.data.datasets[0].backgroundColor = originalChartData.cancelLabels.map(
-      label => getBarColor(label, selectedCategory)
-    );
-    window.catChart4.data.datasets[0].borderColor = originalChartData.cancelLabels.map(
-      label => getBarColor(label, selectedCategory)
+  if (window.catChart4) {
+    window.catChart4.data.datasets[0].backgroundColor = originalChartData.cancelLabels.map(label => 
+      getBarColor(label, selectedCategory)
     );
     window.catChart4.update();
   }

@@ -1,6 +1,6 @@
 // === Main App ===
 document.addEventListener("DOMContentLoaded", () => {
-  d3.csv("olist_combined_clean_3.csv").then((data) => {
+  d3.csv("olist_dataset.csv").then((data) => {
     const loading = document.getElementById("loading");
     if (loading) loading.style.display = "none";
 
@@ -83,6 +83,7 @@ function populateGeoFilter() {
 
 // === STEP 4: Charts ===
 let charts = {};
+let selectedState = null; // Keep track of the selected state globally
 
 function drawCharts(data) {
   const stateAgg = d3.rollups(
@@ -142,7 +143,8 @@ function drawCharts(data) {
     `Fastest avg delivery: ${Math.min(...delivery).toFixed(1)} days`
   );
 
-  charts.reviewScoreByState = drawBarChart(
+  // CHANGED: Use lollipop chart for review scores
+  charts.reviewScoreByState = drawLollipopChart(
     "reviewScoreByState",
     labels,
     review,
@@ -181,6 +183,67 @@ function drawBarChart(canvasId, labels, values, label, color, noteText = null) {
     note.textContent = noteText;
   }
 
+  if (canvasId === 'reviewScoreByState') {
+    return new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          {
+            label,
+            data: values,
+            backgroundColor: color,
+            barThickness: 4,
+          },
+          {
+            label: 'Score dot',
+            data: values,
+            type: 'scatter',
+            backgroundColor: color,
+            radius: 6,
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 5,
+            title: {
+              display: true,
+              text: 'Average Score (out of 5)'
+            }
+          },
+          x: {
+            grid: {
+              display: false
+            }
+          }
+        },
+        onClick: (event, elements) => {
+          if (elements.length > 0) {
+            const i = elements[0].index;
+            const state = event.chart.data.labels[i];
+            handleStateSelection(state);
+          }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            filter: function(tooltipItem) {
+              return tooltipItem.datasetIndex === 1;
+            },
+            callbacks: {
+              label: (ctx) => `${label}: ${ctx.parsed.y.toFixed(2)} ★`,
+            },
+          },
+        },
+      }
+    });
+  }
+
   return new Chart(ctx, {
     type: "bar",
     data: {
@@ -207,10 +270,14 @@ function drawBarChart(canvasId, labels, values, label, color, noteText = null) {
         legend: { display: false },
         tooltip: {
           callbacks: {
-            label: (ctx) =>
-              `${label}: R$ ${ctx.parsed.y.toLocaleString("pt-BR", {
+            label: (ctx) => {
+              if (canvasId === 'deliveryTimeByState') {
+                return `${label}: ${ctx.parsed.y.toFixed(1)} days`;
+              }
+              return `${label}: R$ ${ctx.parsed.y.toLocaleString("pt-BR", {
                 minimumFractionDigits: 2,
-              })}`,
+              })}`;
+            },
           },
         },
       },
@@ -237,8 +304,17 @@ function drawBarChart(canvasId, labels, values, label, color, noteText = null) {
         },
         y: {
           beginAtZero: true,
+          title: {
+            display: true,
+            text: canvasId === 'deliveryTimeByState' ? 'Average Delivery Time (days)' : 'Revenue (R$)'
+          },
           ticks: {
-            callback: (v) => `R$ ${v / 1000}k`,
+            callback: (v) => {
+              if (canvasId === 'deliveryTimeByState') {
+                return `${v.toFixed(1)} days`;
+              }
+              return `R$ ${v / 1000}k`;
+            },
             font: {
               size: 10,
             },
@@ -250,6 +326,94 @@ function drawBarChart(canvasId, labels, values, label, color, noteText = null) {
         },
       },
     },
+  });
+}
+
+// NEW FUNCTION: Lollipop chart for review scores
+function drawLollipopChart(canvasId, labels, values, label, color, noteText = null) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) {
+    console.warn(`Canvas not found: #${canvasId}`);
+    return;
+  }
+
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    console.warn(`Failed to get context for: #${canvasId}`);
+    return;
+  }
+
+  if (charts[canvasId]) charts[canvasId].destroy();
+
+  const note = canvas.parentElement?.querySelector(".chart-note");
+  if (note && noteText) {
+    note.textContent = noteText;
+  }
+
+  return new Chart(ctx, {
+    type: 'bar', // Use 'bar' type as the base
+    data: {
+      labels,
+      datasets: [
+        {
+          label: label,
+          data: values,
+          backgroundColor: color,
+          borderColor: color,
+          barThickness: 4, // The "stick"
+        },
+        {
+          label: 'Score dot',
+          data: values,
+          type: 'scatter', // Overlay scatter for the "dot"
+          backgroundColor: color,
+          radius: 8,
+          hoverRadius: 8 // Ensure radius doesn't change on hover
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          max: 5,
+          title: {
+            display: true,
+            text: 'Average Score (out of 5)'
+          }
+        },
+        x: {
+          grid: {
+            display: false
+          },
+          ticks: {
+            maxRotation: 45,
+            minRotation: 0,
+            font: {
+              size: 10,
+            },
+          }
+        }
+      },
+      onClick: (event, elements) => {
+        if (elements.length > 0) {
+          const i = elements[0].index;
+          const state = event.chart.data.labels[i];
+          handleStateSelection(state);
+        }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          filter: (tooltipItem) => tooltipItem.datasetIndex === 1,
+          callbacks: {
+            label: (ctx) => `${label}: ${ctx.parsed.y.toFixed(2)} ★`,
+          },
+        },
+      },
+    }
   });
 }
 
@@ -366,54 +530,74 @@ function drawScatterChart(canvasId, dataPoints, label, color, noteText = null) {
 // === STEP 5: Filters ===
 
 let allData = [];
-let selectedState = null;
 
 function handleStateSelection(stateAbbr) {
-  if (selectedState === stateAbbr) {
-    selectedState = null; // Toggle off if same state is clicked
-  } else {
-    selectedState = stateAbbr;
+  // If the clicked state is already selected, un-select it. Otherwise, select the new one.
+  selectedState = selectedState === stateAbbr ? null : stateAbbr;
+
+  // Update the visual styles of all charts and the map
+  updateChartStyles(selectedState);
+  updateMapStyles(selectedState);
+
+  // Also update the dropdown to reflect the current selection
+  const currentFilter = document.getElementById("geo-filter");
+  if (currentFilter) {
+    currentFilter.value = selectedState || "";
   }
-
-  // Update stats cards with filtered data, but visualizations with all data for highlighting
-  const filteredData = selectedState
-    ? allData.filter((d) => d.customer_state === selectedState)
-    : allData;
-
-  updateStats(filteredData);
-  updateTrends(filteredData);
-  updateChartStyles();
-  updateMapStyles();
-
-  // Update UI controls
-  document.getElementById("geo-filter").value = selectedState || "";
-  document.getElementById("active-filter-display").textContent = selectedState
-    ? `Showing data for: ${selectedState}`
-    : "Showing all states";
 }
 
-function updateChartStyles() {
-  const defaultColor = "#0ea5e9";
-  const fadedColor = "rgba(14, 165, 233, 0.2)";
+// This function applies visual styles for selection
+function updateChartStyles(selectedState) {
+  // --- Update Revenue Chart ---
+  const revChart = charts.revenueByState;
+  if (revChart) {
+    revChart.data.datasets[0].backgroundColor = revChart.data.labels.map(
+      (state) =>
+        !selectedState || state === selectedState
+          ? "#0ea5e9"
+          : "rgba(14, 165, 233, 0.3)"
+    );
+    revChart.update();
+  }
 
-  for (const chartId in charts) {
-    const chart = charts[chartId];
-    if (!chart) continue;
+  // --- Update Delivery Chart ---
+  const delChart = charts.deliveryTimeByState;
+  if (delChart) {
+    delChart.data.datasets[0].backgroundColor = delChart.data.labels.map(
+      (state) =>
+        !selectedState || state === selectedState
+          ? "#0ea5e9"
+          : "rgba(14, 165, 233, 0.3)"
+    );
+    delChart.update();
+  }
 
-    let colors;
-    if (chart.config.type === "scatter") {
-      colors = chart.data.datasets[0].data.map((point) =>
+  // --- Update Review Lollipop Chart ---
+  const reviewChart = charts.reviewScoreByState;
+  if (reviewChart) {
+    const color = !selectedState
+      ? "#0ea5e9"
+      : "rgba(14, 165, 233, 0.3)";
+    
+    reviewChart.data.datasets[0].backgroundColor = reviewChart.data.labels.map(
+        (state) => !selectedState || state === selectedState ? '#0ea5e9' : 'rgba(14, 165, 233, 0.3)'
+    );
+    reviewChart.data.datasets[1].backgroundColor = reviewChart.data.labels.map(
+        (state) => !selectedState || state === selectedState ? '#0ea5e9' : 'rgba(14, 165, 233, 0.3)'
+    );
+    reviewChart.update();
+  }
+
+  // --- Update Freight/Revenue Scatter Chart ---
+  const scatterChart = charts.freightVsRevenue;
+  if (scatterChart) {
+    scatterChart.data.datasets[0].backgroundColor = scatterChart.data.datasets[0].data.map(
+      (point) =>
         !selectedState || point.label === selectedState
-          ? defaultColor
-          : fadedColor
-      );
-    } else {
-      colors = chart.data.labels.map((label) =>
-        !selectedState || label === selectedState ? defaultColor : fadedColor
-      );
-    }
-    chart.data.datasets[0].backgroundColor = colors;
-    chart.update("none"); // 'none' for no animation
+          ? "#0ea5e9"
+          : "rgba(14, 165, 233, 0.3)"
+    );
+    scatterChart.update();
   }
 }
 
@@ -425,10 +609,12 @@ function setupFilterEvents(data) {
 
   if (!filterEl || !resetBtn) return;
 
-  filterEl.addEventListener("change", function () {
-    handleStateSelection(this.value || null);
+  // When the dropdown is changed, update the selection
+  filterEl.addEventListener("change", (e) => {
+    handleStateSelection(e.target.value || null);
   });
 
+  // The reset button should clear the selection
   resetBtn.addEventListener("click", () => {
     handleStateSelection(null);
   });
@@ -863,7 +1049,7 @@ function getTextColor(bgColor) {
   return brightness > 140 ? "#000" : "#fff";
 }
 
-function updateMapStyles() {
+function updateMapStyles(selectedState) {
   d3.select("#brazil-map")
     .selectAll("path") // These are state paths
     .attr("fill-opacity", (d) => {
