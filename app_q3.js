@@ -4,6 +4,7 @@
 let selectedCategory = null;
 let originalChartData = {};
 let categoryData = null; // Store the full dataset locally for category charts
+let colorScale = null; // To assign consistent colors to categories
 
 // Global variables for sorting functionality
 let revenueSortOrder = "desc"; // Default: descending (highest first)
@@ -35,6 +36,9 @@ function drawCategoryAnalysis(data) {
   const categories = Array.from(
     new Set(data.map((d) => d.product_category_name_english)) // Use English name
   ).filter(Boolean); // Remove any null/undefined entries
+
+  // Initialize a global color scale for categories
+  colorScale = d3.scaleOrdinal(d3.schemeTableau10).domain(categories);
 
   // === Filter Dropdown ===
   const select = document.getElementById("category-filter");
@@ -598,6 +602,22 @@ function getBarColor(category, selectedCategory) {
 
 // Helper function to get point color for scatter plot
 function getPointColor(category, selectedCategory) {
+  // Use the global color scale if available
+  if (colorScale) {
+    const color = d3.color(colorScale(category));
+    if (color) {
+      if (!selectedCategory || category === selectedCategory) {
+        // Full opacity for selected or when no selection is active
+        return color.formatRgb();
+      } else {
+        // Reduced opacity for non-selected items
+        color.opacity = 0.3;
+        return color.formatRgb();
+      }
+    }
+  }
+
+  // Fallback to the original color scheme if colorScale fails
   const baseColor = "#f59e0b";
   const baseColorTransparent = "rgba(245, 158, 11, 0.3)";
 
