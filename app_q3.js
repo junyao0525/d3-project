@@ -276,16 +276,16 @@ function drawCategoryCharts(data) {
         },
         datalabels: {
           display: true,
-          color: "#fff",
-          anchor: "center",
-          align: "center",
-          clamp: true,
+          color:  revenueSortOrder === "desc" ? "#fffde7 " : "black",
+          anchor: revenueSortOrder === "desc" ? "center" : "end",
+          align:  revenueSortOrder === "desc" ? "end" : "right",
+          clamp: false,
           font: {
             weight: "bold",
             size: 11,
           },
           formatter: function (value) {
-            return `R$ ${(value / 1000).toFixed(0)}k`;
+            return `R$ ${(value).toFixed(2)}k`;
           },
         },
       },
@@ -324,6 +324,21 @@ function drawCategoryCharts(data) {
             getBarColor(label, selectedCategory)
           ),
           barThickness: 4, // This makes the bar look like a stick
+          datalabels: {
+            display: true,
+            color: "black",
+            anchor: "end",
+            align: "right",
+            offset: 8,
+            clamp: true,
+            font: {
+              weight: "bold",
+              size: 11,
+            },
+            formatter: function (value) {
+              return value.toFixed(2);
+            },
+          }
         },
         {
           label: "Avg Review Score dot",
@@ -337,7 +352,10 @@ function drawCategoryCharts(data) {
           ),
           radius: 8,
           hoverRadius: 8,
-        },
+          datalabels: {
+            display: false
+          }
+        }
       ],
     },
     options: {
@@ -347,7 +365,7 @@ function drawCategoryCharts(data) {
         x: {
           // Value Axis
           beginAtZero: true,
-          max: 5,
+          max: 6,
           title: {
             display: true,
             text: "Average Score (out of 5)",
@@ -399,9 +417,6 @@ function drawCategoryCharts(data) {
               return "";
             },
           },
-        },
-        datalabels: {
-          display: false,
         },
       },
     },
