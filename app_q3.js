@@ -7,7 +7,6 @@ Chart.register(ChartDataLabels);
 let selectedCategory = null;
 let originalChartData = {};
 let categoryData = null; // Store the full dataset locally for category charts
-let colorScale = null; // To assign consistent colors to categories
 
 // Global variables for sorting functionality
 let revenueSortOrder = "desc"; // Default: descending (highest first)
@@ -39,9 +38,6 @@ function drawCategoryAnalysis(data) {
   const categories = Array.from(
     new Set(data.map((d) => d.product_category_name_english)) // Use English name
   ).filter(Boolean); // Remove any null/undefined entries
-
-  // Initialize a global color scale for categories
-  colorScale = d3.scaleOrdinal(d3.schemeTableau10).domain(categories);
 
   // === Filter Dropdown ===
   const select = document.getElementById("category-filter");
@@ -280,18 +276,18 @@ function drawCategoryCharts(data) {
         },
         datalabels: {
           display: true,
-          color: '#fff',
-          anchor: 'center',
-          align: 'center',
+          color: "#fff",
+          anchor: "center",
+          align: "center",
           clamp: true,
           font: {
-            weight: 'bold',
-            size: 11
+            weight: "bold",
+            size: 11,
           },
-          formatter: function(value) {
+          formatter: function (value) {
             return `R$ ${(value / 1000).toFixed(0)}k`;
-          }
-        }
+          },
+        },
       },
     },
   });
@@ -405,8 +401,8 @@ function drawCategoryCharts(data) {
           },
         },
         datalabels: {
-          display: false
-        }
+          display: false,
+        },
       },
     },
   });
@@ -471,8 +467,8 @@ function drawCategoryCharts(data) {
           },
         },
         datalabels: {
-          display: false
-        }
+          display: false,
+        },
       },
       scales: {
         x: {
@@ -588,18 +584,18 @@ function drawCategoryCharts(data) {
         },
         datalabels: {
           display: true,
-          color: '#000',
-          anchor: 'end',
-          align: 'right',
+          color: "#000",
+          anchor: "end",
+          align: "right",
           offset: 4,
           font: {
             size: 11,
-            weight: 'bold'
+            weight: "bold",
           },
-          formatter: function(value) {
-            return value.toFixed(1) + '%';
-          }
-        }
+          formatter: function (value) {
+            return value.toFixed(1) + "%";
+          },
+        },
       },
     },
   });
@@ -639,21 +635,6 @@ function getBarColor(category, selectedCategory) {
 
 // Helper function to get point color for scatter plot
 function getPointColor(category, selectedCategory) {
-  // Use the global color scale if available
-  if (colorScale) {
-    const color = d3.color(colorScale(category));
-    if (color) {
-      if (!selectedCategory || category === selectedCategory) {
-        // Full opacity for selected or when no selection is active
-        return color.formatRgb();
-      } else {
-        // Reduced opacity for non-selected items
-        color.opacity = 0.3;
-        return color.formatRgb();
-      }
-    }
-  }
-
   // Fallback to the original color scheme if colorScale fails
   const baseColor = "#f59e0b";
   const baseColorTransparent = "rgba(245, 158, 11, 0.3)";
