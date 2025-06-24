@@ -21,6 +21,17 @@ function formatCategoryName(name) {
     .join(" ");
 }
 
+// Preprocess function to convert string values to numbers and dates
+function preprocess(data) {
+  data.forEach((d) => {
+    d.payment_value = +d.payment_value;
+    d.review_score = +d.review_score;
+    d.freight_value = +d.freight_value;
+    d.order_purchase_timestamp = new Date(d.order_purchase_timestamp);
+    d.order_delivered_customer_date = new Date(d.order_delivered_customer_date);
+  });
+}
+
 d3.csv("olist_dataset.csv").then((data) => {
   preprocess(data);
   drawCategoryAnalysis(data);
@@ -55,17 +66,16 @@ function drawCategoryAnalysis(data) {
 
   select.addEventListener("change", () => {
     const val = select.value;
-    const filtered = val
-      ? data.filter((d) => d.product_category_name_english === val) // Use English name
-      : data;
+
+    // Update the selected category for highlighting
+    selectedCategory = val || null;
+
+    // Update the filter display
     document.getElementById("category-filter-display").textContent =
       val || "All categories";
 
-    // Clear highlighting when filter changes
-    selectedCategory = null;
-
-    drawCategoryCharts(filtered);
-    showCategoryInsights(filtered);
+    // Smoothly update chart highlighting without redrawing
+    updateChartHighlighting();
   });
 
   drawCategoryCharts(data);
@@ -543,7 +553,9 @@ function drawCategoryCharts(data) {
         {
           label: "Cancellation Rate (%)",
           data: cancelRates,
-          backgroundColor: "#f59e0b", // Orange color
+          backgroundColor: cancelLabels.map((label) =>
+            getBarColor(label, selectedCategory)
+          ),
         },
       ],
     },
@@ -666,7 +678,7 @@ function getPointColor(category, selectedCategory) {
   }
 }
 
-// Function to toggle category selection
+// Function to toggle category selection - now with smooth animation like geographic tab
 function toggleCategorySelection(category) {
   if (selectedCategory === category) {
     // If clicking the same category, deselect it
@@ -676,24 +688,21 @@ function toggleCategorySelection(category) {
     selectedCategory = category;
   }
 
-  // Check if we have valid data before redrawing
-  if (
-    !categoryData ||
-    !Array.isArray(categoryData) ||
-    categoryData.length === 0
-  ) {
-    console.error("❌ No valid data available for chart redraw");
-    return;
+  // Update the dropdown to reflect the current selection
+  const currentFilter = document.getElementById("category-filter");
+  if (currentFilter) {
+    currentFilter.value = selectedCategory || "";
   }
 
-  // Redraw all charts to include the selected category if it's not in top 10
-  drawCategoryCharts(categoryData);
+  // Update the filter display
+  document.getElementById("category-filter-display").textContent =
+    selectedCategory ? formatCategoryName(selectedCategory) : "All categories";
 
-  // Update highlighting for existing charts
+  // Smoothly update chart highlighting without redrawing
   updateChartHighlighting();
 }
 
-// Function to update highlighting across all charts
+// Function to update highlighting across all charts with smooth animation
 function updateChartHighlighting() {
   // Update Chart 1 (Revenue)
   if (window.catChart1 && originalChartData.revLabels) {
@@ -736,7 +745,7 @@ function updateChartHighlighting() {
   }
 
   // Update Chart 4 (Cancellation)
-  if (window.catChart4) {
+  if (window.catChart4 && originalChartData.cancelLabels) {
     window.catChart4.data.datasets[0].backgroundColor =
       originalChartData.cancelLabels.map((label) =>
         getBarColor(label, selectedCategory)
@@ -871,8 +880,8 @@ function setupSortingEvents() {
   document.getElementById("revenue-sort-asc")?.addEventListener("click", () => {
     revenueSortOrder = "asc";
     updateSortButtonStates("revenue", "asc");
-    console.log("📊 Redrawing charts with categoryData:", categoryData?.length);
-    drawCategoryCharts(categoryData);
+    console.log("📊 Smooth sorting revenue charts");
+    updateChartSorting("revenue", "asc");
   });
 
   document
@@ -880,41 +889,38 @@ function setupSortingEvents() {
     ?.addEventListener("click", () => {
       revenueSortOrder = "desc";
       updateSortButtonStates("revenue", "desc");
-      console.log(
-        "📊 Redrawing charts with categoryData:",
-        categoryData?.length
-      );
-      drawCategoryCharts(categoryData);
+      console.log("📊 Smooth sorting revenue charts");
+      updateChartSorting("revenue", "desc");
     });
 
   // Review sorting
   document.getElementById("review-sort-asc")?.addEventListener("click", () => {
     reviewSortOrder = "asc";
     updateSortButtonStates("review", "asc");
-    console.log("📊 Redrawing charts with categoryData:", categoryData?.length);
-    drawCategoryCharts(categoryData);
+    console.log("📊 Smooth sorting review charts");
+    updateChartSorting("review", "asc");
   });
 
   document.getElementById("review-sort-desc")?.addEventListener("click", () => {
     reviewSortOrder = "desc";
     updateSortButtonStates("review", "desc");
-    console.log("📊 Redrawing charts with categoryData:", categoryData?.length);
-    drawCategoryCharts(categoryData);
+    console.log("📊 Smooth sorting review charts");
+    updateChartSorting("review", "desc");
   });
 
   // Return rate sorting
   document.getElementById("return-sort-asc")?.addEventListener("click", () => {
     returnSortOrder = "asc";
     updateSortButtonStates("return", "asc");
-    console.log("📊 Redrawing charts with categoryData:", categoryData?.length);
-    drawCategoryCharts(categoryData);
+    console.log("📊 Smooth sorting return charts");
+    updateChartSorting("return", "asc");
   });
 
   document.getElementById("return-sort-desc")?.addEventListener("click", () => {
     returnSortOrder = "desc";
     updateSortButtonStates("return", "desc");
-    console.log("📊 Redrawing charts with categoryData:", categoryData?.length);
-    drawCategoryCharts(categoryData);
+    console.log("📊 Smooth sorting return charts");
+    updateChartSorting("return", "desc");
   });
 
   // Set initial button states
@@ -923,6 +929,190 @@ function setupSortingEvents() {
   updateSortButtonStates("return", returnSortOrder);
 
   console.log("✅ Sorting events setup complete");
+}
+
+// Function to smoothly update chart sorting without redrawing
+function updateChartSorting(chartType, sortOrder) {
+  if (
+    !categoryData ||
+    !Array.isArray(categoryData) ||
+    categoryData.length === 0
+  ) {
+    console.error("❌ No valid data available for sorting");
+    return;
+  }
+
+  // Recalculate aggregated data
+  const catAgg = d3
+    .rollups(
+      categoryData,
+      (v) => ({
+        totalRevenue: d3.sum(v, (d) => +d.payment_value),
+        avgReview: d3.mean(v, (d) => +d.review_score),
+        cancelRate:
+          v.filter((d) => d.order_status !== "delivered").length / v.length,
+      }),
+      (d) => d.product_category_name_english
+    )
+    .filter(([k, v]) => k && v.totalRevenue > 0);
+
+  // Get sorted data based on chart type
+  let sortedData;
+  if (chartType === "revenue") {
+    sortedData = catAgg
+      .sort((a, b) =>
+        sortOrder === "desc"
+          ? d3.descending(a[1].totalRevenue, b[1].totalRevenue)
+          : d3.ascending(a[1].totalRevenue, b[1].totalRevenue)
+      )
+      .slice(0, 10);
+  } else if (chartType === "review") {
+    sortedData = catAgg
+      .sort((a, b) =>
+        sortOrder === "desc"
+          ? d3.descending(a[1].avgReview, b[1].avgReview)
+          : d3.ascending(a[1].avgReview, b[1].avgReview)
+      )
+      .slice(0, 10);
+  } else if (chartType === "return") {
+    sortedData = catAgg
+      .sort((a, b) =>
+        sortOrder === "desc"
+          ? d3.descending(a[1].cancelRate, b[1].cancelRate)
+          : d3.ascending(a[1].cancelRate, b[1].cancelRate)
+      )
+      .slice(0, 10);
+  }
+
+  // Include selected category if not in top 10
+  if (selectedCategory) {
+    const isInTop = sortedData.some(([cat, _]) => cat === selectedCategory);
+    if (!isInTop) {
+      const selectedData = catAgg.find(([cat, _]) => cat === selectedCategory);
+      if (selectedData) {
+        sortedData.push(selectedData);
+        // Re-sort to maintain order
+        if (chartType === "revenue") {
+          sortedData.sort((a, b) =>
+            sortOrder === "desc"
+              ? d3.descending(a[1].totalRevenue, b[1].totalRevenue)
+              : d3.ascending(a[1].totalRevenue, b[1].totalRevenue)
+          );
+        } else if (chartType === "review") {
+          sortedData.sort((a, b) =>
+            sortOrder === "desc"
+              ? d3.descending(a[1].avgReview, b[1].avgReview)
+              : d3.ascending(a[1].avgReview, b[1].avgReview)
+          );
+        } else if (chartType === "return") {
+          sortedData.sort((a, b) =>
+            sortOrder === "desc"
+              ? d3.descending(a[1].cancelRate, b[1].cancelRate)
+              : d3.ascending(a[1].cancelRate, b[1].cancelRate)
+          );
+        }
+      }
+    }
+  }
+
+  // Update the specific chart
+  if (chartType === "revenue" && window.catChart1) {
+    const labels = sortedData.map((d) => d[0]);
+    const values = sortedData.map((d) => d[1].totalRevenue);
+
+    window.catChart1.data.labels = labels;
+    window.catChart1.data.datasets[0].data = values;
+    window.catChart1.data.datasets[0].backgroundColor = labels.map((label) =>
+      getBarColor(label, selectedCategory)
+    );
+    window.catChart1.data.datasets[0].borderColor = labels.map((label) =>
+      getBarColor(label, selectedCategory)
+    );
+
+    // Update chart note
+    const topRevCat = sortedData[0];
+    const totalRevenue = d3.sum(catAgg, ([_, v]) => v.totalRevenue);
+    const revenuePct = (
+      (topRevCat[1].totalRevenue / totalRevenue) *
+      100
+    ).toFixed(1);
+    document
+      .querySelector("#revenueByCategory")
+      .parentElement.querySelector(
+        ".chart-note"
+      ).textContent = `${formatCategoryName(
+      topRevCat[0]
+    )} accounts for ${revenuePct}% of total revenue (${
+      sortOrder === "desc" ? "Highest" : "Lowest"
+    } first)`;
+
+    window.catChart1.update();
+  } else if (chartType === "review" && window.catChart2) {
+    const labels = sortedData.map((d) => d[0]);
+    const values = sortedData.map((d) => d[1].avgReview);
+
+    window.catChart2.data.labels = labels;
+    window.catChart2.data.datasets[0].data = values;
+    window.catChart2.data.datasets[1].data = values;
+
+    const getColors = () =>
+      labels.map((label) => getBarColor(label, selectedCategory));
+    window.catChart2.data.datasets[0].backgroundColor = getColors();
+    window.catChart2.data.datasets[0].borderColor = getColors();
+    window.catChart2.data.datasets[1].backgroundColor = getColors();
+    window.catChart2.data.datasets[1].borderColor = getColors();
+
+    // Update chart note
+    const bestReviewCat = sortedData[0];
+    document
+      .querySelector("#reviewByCategory")
+      .parentElement.querySelector(
+        ".chart-note"
+      ).textContent = `${formatCategoryName(bestReviewCat[0])} has the ${
+      sortOrder === "desc" ? "highest" : "lowest"
+    } satisfaction with ${bestReviewCat[1].avgReview.toFixed(2)} stars (${
+      sortOrder === "desc" ? "Highest" : "Lowest"
+    } first)`;
+
+    window.catChart2.update();
+  } else if (chartType === "return" && window.catChart4) {
+    const labels = sortedData.map((d) => d[0]);
+    const values = sortedData.map((d) => d[1].cancelRate * 100);
+
+    window.catChart4.data.labels = labels;
+    window.catChart4.data.datasets[0].data = values;
+    window.catChart4.data.datasets[0].backgroundColor = labels.map((label) =>
+      getBarColor(label, selectedCategory)
+    );
+
+    // Update chart note
+    const worstCancelCat = sortedData[0];
+    document
+      .querySelector("#returnByCategory")
+      .parentElement.querySelector(
+        ".chart-note"
+      ).textContent = `${formatCategoryName(worstCancelCat[0])} has the ${
+      sortOrder === "desc" ? "highest" : "lowest"
+    } return rate at ${(worstCancelCat[1].cancelRate * 100).toFixed(1)}% (${
+      sortOrder === "desc" ? "Highest" : "Lowest"
+    } first)`;
+
+    window.catChart4.update();
+  }
+
+  // Update original chart data for highlighting
+  if (chartType === "revenue") {
+    originalChartData.revLabels = sortedData.map((d) => d[0]);
+    originalChartData.revValues = sortedData.map((d) => d[1].totalRevenue);
+  } else if (chartType === "review") {
+    originalChartData.reviewLabels = sortedData.map((d) => d[0]);
+    originalChartData.reviewValues = sortedData.map((d) => d[1].avgReview);
+  } else if (chartType === "return") {
+    originalChartData.cancelLabels = sortedData.map((d) => d[0]);
+    originalChartData.cancelRates = sortedData.map(
+      (d) => d[1].cancelRate * 100
+    );
+  }
 }
 
 // Function to update sort button visual states
