@@ -700,8 +700,240 @@ function toggleCategorySelection(category) {
   document.getElementById("category-filter-display").textContent =
     selectedCategory ? formatCategoryName(selectedCategory) : "All categories";
 
+  // Update chart data to match current sort order and include selected category
+  updateChartDataForCurrentSort();
+
   // Smoothly update chart highlighting without redrawing
   updateChartHighlighting();
+}
+
+// Function to update chart data to match current sort order and include selected category
+function updateChartDataForCurrentSort() {
+  if (
+    !categoryData ||
+    !Array.isArray(categoryData) ||
+    categoryData.length === 0
+  ) {
+    return;
+  }
+
+  // Recalculate aggregated data
+  const catAgg = d3
+    .rollups(
+      categoryData,
+      (v) => ({
+        totalRevenue: d3.sum(v, (d) => +d.payment_value),
+        avgReview: d3.mean(v, (d) => +d.review_score),
+        cancelRate:
+          v.filter((d) => d.order_status !== "delivered").length / v.length,
+      }),
+      (d) => d.product_category_name_english
+    )
+    .filter(([k, v]) => k && v.totalRevenue > 0);
+
+  // Get sorted data for each chart type
+  const revenueData = catAgg
+    .sort((a, b) =>
+      revenueSortOrder === "desc"
+        ? d3.descending(a[1].totalRevenue, b[1].totalRevenue)
+        : d3.ascending(a[1].totalRevenue, b[1].totalRevenue)
+    )
+    .slice(0, 10);
+
+  const reviewData = catAgg
+    .sort((a, b) =>
+      reviewSortOrder === "desc"
+        ? d3.descending(a[1].avgReview, b[1].avgReview)
+        : d3.ascending(a[1].avgReview, b[1].avgReview)
+    )
+    .slice(0, 10);
+
+  const cancelData = catAgg
+    .sort((a, b) =>
+      returnSortOrder === "desc"
+        ? d3.descending(a[1].cancelRate, b[1].cancelRate)
+        : d3.ascending(a[1].cancelRate, b[1].cancelRate)
+    )
+    .slice(0, 10);
+
+  // Include selected category if not in top 10
+  function includeSelectedCategory(data, sortOrder, metric) {
+    if (!selectedCategory) return data;
+
+    const isInTop = data.some(([cat, _]) => cat === selectedCategory);
+    if (isInTop) return data;
+
+    const selectedData = catAgg.find(([cat, _]) => cat === selectedCategory);
+    if (!selectedData) return data;
+
+    const combinedData = [...data, selectedData];
+
+    // Re-sort based on metric
+    if (metric === "revenue") {
+      return combinedData.sort((a, b) =>
+        sortOrder === "desc"
+          ? d3.descending(a[1].totalRevenue, b[1].totalRevenue)
+          : d3.ascending(a[1].totalRevenue, b[1].totalRevenue)
+      );
+    } else if (metric === "review") {
+      return combinedData.sort((a, b) =>
+        sortOrder === "desc"
+          ? d3.descending(a[1].avgReview, b[1].avgReview)
+          : d3.ascending(a[1].avgReview, b[1].avgReview)
+      );
+    } else if (metric === "cancel") {
+      return combinedData.sort((a, b) =>
+        sortOrder === "desc"
+          ? d3.descending(a[1].cancelRate, b[1].cancelRate)
+          : d3.ascending(a[1].cancelRate, b[1].cancelRate)
+      );
+    }
+
+    return combinedData;
+  }
+
+  const finalRevenueData = includeSelectedCategory(
+    revenueData,
+    revenueSortOrder,
+    "revenue"
+  );
+  const finalReviewData = includeSelectedCategory(
+    reviewData,
+    reviewSortOrder,
+    "review"
+  );
+  const finalCancelData = includeSelectedCategory(
+    cancelData,
+    returnSortOrder,
+    "cancel"
+  );
+
+  // Update Chart 1 (Revenue) data
+  if (window.catChart1) {
+    const labels = finalRevenueData.map((d) => d[0]);
+    const values = finalRevenueData.map((d) => d[1].totalRevenue);
+
+    window.catChart1.data.labels = labels;
+    window.catChart1.data.datasets[0].data = values;
+    window.catChart1.data.datasets[0].backgroundColor = labels.map((label) =>
+      getBarColor(label, selectedCategory)
+    );
+    window.catChart1.data.datasets[0].borderColor = labels.map((label) =>
+      getBarColor(label, selectedCategory)
+    );
+
+    // Update datalabels configuration based on sort order
+    window.catChart1.options.plugins.datalabels.color =
+      revenueSortOrder === "desc" ? "#fffde7" : "black";
+    window.catChart1.options.plugins.datalabels.anchor =
+      revenueSortOrder === "desc" ? "center" : "end";
+    window.catChart1.options.plugins.datalabels.align =
+      revenueSortOrder === "desc" ? "end" : "right";
+
+    // Update chart note
+    const topRevCat = finalRevenueData[0];
+    const totalRevenue = d3.sum(catAgg, ([_, v]) => v.totalRevenue);
+    const revenuePct = (
+      (topRevCat[1].totalRevenue / totalRevenue) *
+      100
+    ).toFixed(1);
+    document
+      .querySelector("#revenueByCategory")
+      .parentElement.querySelector(
+        ".chart-note"
+      ).textContent = `${formatCategoryName(
+      topRevCat[0]
+    )} accounts for ${revenuePct}% of total revenue (${
+      revenueSortOrder === "desc" ? "Highest" : "Lowest"
+    } first)`;
+
+    window.catChart1.update();
+  }
+
+  // Update Chart 2 (Review) data
+  if (window.catChart2) {
+    const labels = finalReviewData.map((d) => d[0]);
+    const values = finalReviewData.map((d) => d[1].avgReview);
+
+    window.catChart2.data.labels = labels;
+    window.catChart2.data.datasets[0].data = values;
+    window.catChart2.data.datasets[1].data = values;
+
+    const getColors = () =>
+      labels.map((label) => getBarColor(label, selectedCategory));
+    window.catChart2.data.datasets[0].backgroundColor = getColors();
+    window.catChart2.data.datasets[0].borderColor = getColors();
+    window.catChart2.data.datasets[1].backgroundColor = getColors();
+    window.catChart2.data.datasets[1].borderColor = getColors();
+
+    // Update chart note
+    const bestReviewCat = finalReviewData[0];
+    document
+      .querySelector("#reviewByCategory")
+      .parentElement.querySelector(
+        ".chart-note"
+      ).textContent = `${formatCategoryName(bestReviewCat[0])} has the ${
+      reviewSortOrder === "desc" ? "highest" : "lowest"
+    } satisfaction with ${bestReviewCat[1].avgReview.toFixed(2)} stars (${
+      reviewSortOrder === "desc" ? "Highest" : "Lowest"
+    } first)`;
+
+    window.catChart2.update();
+  }
+
+  // Update Chart 4 (Cancellation) data
+  if (window.catChart4) {
+    const labels = finalCancelData.map((d) => d[0]);
+    const values = finalCancelData.map((d) => d[1].cancelRate * 100);
+
+    window.catChart4.data.labels = labels;
+    window.catChart4.data.datasets[0].data = values;
+    window.catChart4.data.datasets[0].backgroundColor = labels.map((label) =>
+      getBarColor(label, selectedCategory)
+    );
+
+    // Update chart note
+    const worstCancelCat = finalCancelData[0];
+    document
+      .querySelector("#returnByCategory")
+      .parentElement.querySelector(
+        ".chart-note"
+      ).textContent = `${formatCategoryName(worstCancelCat[0])} has the ${
+      returnSortOrder === "desc" ? "highest" : "lowest"
+    } return rate at ${(worstCancelCat[1].cancelRate * 100).toFixed(1)}% (${
+      returnSortOrder === "desc" ? "Highest" : "Lowest"
+    } first)`;
+
+    window.catChart4.update();
+  }
+
+  // Update Chart 3 (Scatter) highlighting
+  if (window.catChart3) {
+    window.catChart3.data.datasets[0].backgroundColor =
+      originalChartData.scatterData.map((point) =>
+        getPointColor(point.label, selectedCategory)
+      );
+    window.catChart3.data.datasets[0].borderColor =
+      originalChartData.scatterData.map((point) =>
+        getPointColor(point.label, selectedCategory)
+      );
+    window.catChart3.update();
+  }
+
+  // Update original chart data for highlighting
+  originalChartData = {
+    revLabels: finalRevenueData.map((d) => d[0]),
+    revValues: finalRevenueData.map((d) => d[1].totalRevenue),
+    reviewLabels: finalReviewData.map((d) => d[0]),
+    reviewValues: finalReviewData.map((d) => d[1].avgReview),
+    scatterData: catAgg.map(([cat, val]) => ({
+      x: val.avgReview,
+      y: val.totalRevenue,
+      label: cat,
+    })),
+    cancelLabels: finalCancelData.map((d) => d[0]),
+    cancelRates: finalCancelData.map((d) => d[1].cancelRate * 100),
+  };
 }
 
 // Function to update highlighting across all charts with smooth animation
@@ -1032,9 +1264,12 @@ function updateChartSorting(chartType, sortOrder) {
     );
 
     // Update datalabels configuration based on sort order
-    window.catChart1.options.plugins.datalabels.color = sortOrder === "desc" ? "#fffde7" : "black";
-    window.catChart1.options.plugins.datalabels.anchor = sortOrder === "desc" ? "center" : "end";
-    window.catChart1.options.plugins.datalabels.align = sortOrder === "desc" ? "end" : "right";
+    window.catChart1.options.plugins.datalabels.color =
+      sortOrder === "desc" ? "#fffde7" : "black";
+    window.catChart1.options.plugins.datalabels.anchor =
+      sortOrder === "desc" ? "center" : "end";
+    window.catChart1.options.plugins.datalabels.align =
+      sortOrder === "desc" ? "end" : "right";
 
     // Update chart note
     const topRevCat = sortedData[0];
