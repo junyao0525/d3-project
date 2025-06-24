@@ -276,16 +276,16 @@ function drawCategoryCharts(data) {
         },
         datalabels: {
           display: true,
-          color:  revenueSortOrder === "desc" ? "#fffde7 " : "black",
+          color: revenueSortOrder === "desc" ? "#fffde7 " : "black",
           anchor: revenueSortOrder === "desc" ? "center" : "end",
-          align:  revenueSortOrder === "desc" ? "end" : "right",
+          align: revenueSortOrder === "desc" ? "end" : "right",
           clamp: false,
           font: {
             weight: "bold",
             size: 11,
           },
           formatter: function (value) {
-            return `R$ ${(value).toFixed(2)}k`;
+            return `R$ ${value.toFixed(2)}k`;
           },
         },
       },
@@ -338,7 +338,7 @@ function drawCategoryCharts(data) {
             formatter: function (value) {
               return value.toFixed(2);
             },
-          }
+          },
         },
         {
           label: "Avg Review Score dot",
@@ -353,9 +353,9 @@ function drawCategoryCharts(data) {
           radius: 8,
           hoverRadius: 8,
           datalabels: {
-            display: false
-          }
-        }
+            display: false,
+          },
+        },
       ],
     },
     options: {
@@ -528,6 +528,10 @@ function drawCategoryCharts(data) {
   const cancelRates = cancelData.map((d) => d[1].cancelRate * 100);
   const worstCancelCat = cancelData[0];
 
+  // Calculate the maximum return rate from all categories to maintain consistent x-axis scale
+  const allCancelRates = catAgg.map(([_, val]) => val.cancelRate * 100);
+  const maxCancelRate = Math.max(...allCancelRates);
+
   const cancelCtx = document
     .getElementById("returnByCategory")
     .getContext("2d");
@@ -557,6 +561,7 @@ function drawCategoryCharts(data) {
         x: {
           // Value axis
           beginAtZero: true,
+          max: 14, // Fixed maximum to maintain consistent scale
           title: {
             display: true,
             text: "Cancellation Rate (%)",
