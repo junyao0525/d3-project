@@ -13,6 +13,8 @@ let revenueSortOrder = "desc"; // Default: descending (highest first)
 let reviewSortOrder = "desc"; // Default: descending (highest first)
 let returnSortOrder = "desc"; // Default: descending (highest first)
 
+console.log("revenueSortOrder", revenueSortOrder);
+
 function formatCategoryName(name) {
   if (!name || typeof name !== "string") return "";
   return name
@@ -199,7 +201,7 @@ function drawCategoryCharts(data) {
   const revenuePct = ((topRevCat[1].totalRevenue / totalRevenue) * 100).toFixed(
     1
   );
-
+  console.log(revenueSortOrder, "revenueSortOrder");
   const revCtx = document.getElementById("revenueByCategory").getContext("2d");
   window.catChart1 = new Chart(revCtx, {
     type: "bar",
@@ -289,7 +291,7 @@ function drawCategoryCharts(data) {
           color: revenueSortOrder === "desc" ? "#fffde7 " : "black",
           anchor: revenueSortOrder === "desc" ? "center" : "end",
           align: revenueSortOrder === "desc" ? "end" : "right",
-          clamp: false,
+          clamp: true,
           font: {
             weight: "bold",
             size: 11,
@@ -1028,6 +1030,11 @@ function updateChartSorting(chartType, sortOrder) {
     window.catChart1.data.datasets[0].borderColor = labels.map((label) =>
       getBarColor(label, selectedCategory)
     );
+
+    // Update datalabels configuration based on sort order
+    window.catChart1.options.plugins.datalabels.color = sortOrder === "desc" ? "#fffde7" : "black";
+    window.catChart1.options.plugins.datalabels.anchor = sortOrder === "desc" ? "center" : "end";
+    window.catChart1.options.plugins.datalabels.align = sortOrder === "desc" ? "end" : "right";
 
     // Update chart note
     const topRevCat = sortedData[0];
